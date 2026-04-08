@@ -2771,6 +2771,40 @@ function exportMarkers() {
     showStatus('标注数据导出成功', 'success');
 }
 
+// 显示状态消息
+function showStatus(message, type) {
+    console.log('状态消息:', message, type);
+    
+    // 尝试在地图上显示状态
+    const mapContainer = document.querySelector('.map-container');
+    if (mapContainer) {
+        // 创建一个临时提示
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background: ${type === 'error' ? '#f44336' : type === 'success' ? '#4CAF50' : '#2196F3'};
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 10000;
+            font-size: 14px;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        // 3 秒后移除
+        setTimeout(function() {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+}
+
 // 当页面加载完成时，检查是否需要显示表格视图
 window.addEventListener('load', function() {
     // 检查URL参数，支持直接访问表格视图
