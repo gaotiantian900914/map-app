@@ -18,12 +18,33 @@ let selectedMarkers = [];
 // 云开发环境 ID
 const TCB_ENV_ID = 'map-app-1gu1wii1bfe2604c';
 
-// 初始化云开发
-const app = tcb.init({
-  env: TCB_ENV_ID
-});
+// 云开发相关变量（延迟初始化）
+let app = null;
+let db = null;
+let cloudEnabled = false;
 
-const db = app.database();
+// 初始化云开发（在页面加载完成后调用）
+function initCloudBase() {
+    console.log('检查云开发 SDK...');
+    // 检查 tcb 是否已加载
+    if (typeof window.tcb === 'undefined') {
+        console.warn('云开发 SDK 未加载，将使用 localStorage 存储');
+        cloudEnabled = false;
+        return;
+    }
+    
+    try {
+        app = window.tcb.init({
+            env: TCB_ENV_ID
+        });
+        db = app.database();
+        cloudEnabled = true;
+        console.log('云开发初始化成功');
+    } catch (error) {
+        console.error('云开发初始化失败:', error);
+        cloudEnabled = false;
+    }
+}
 
 // 高德地图API Key - Web服务API
 const AMAP_KEY = '45461b14046c9bda310ce713420c84d4';
@@ -63,19 +84,31 @@ const MARKER_ICONS = {
 
 // 初始化地图
 function initializeApp() {
+    console.log('initializeApp 被调用');
     // 延迟初始化，确保DOM完全加载
     setTimeout(function() {
-        console.log('开始初始化应用...');
-        loadCategories();
-        initMap();
+        try {
+            console.log('开始初始化应用...');
+            // 先初始化云开发（可选）
+            initCloudBase();
+            // 加载分类
+            loadCategories();
+            // 初始化地图
+            initMap();
+            console.log('应用初始化完成');
+        } catch (e) {
+            console.error('应用初始化失败:', e);
+            alert('应用初始化失败: ' + e.message);
+        }
     }, 500);
 }
 
-// 确保在DOM加载完成后初始化
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
+// 确保在 window.onload 后初始化（所有外部脚本加载完成后）
+if (document.readyState === 'complete') {
+    // 页面已完全加载
     initializeApp();
+} else {
+    window.addEventListener('load', initializeApp);
 }
 
 // Tab 切换功能
@@ -139,7 +172,7 @@ function initMap() {
     // 检查AMap对象
     if (typeof AMap === 'undefined') {
         console.error('AMap对象未定义，地图API加载失败');
-        showStatus('地图加载失败，请检查网络连接', 'error');
+        alert('地图API加载失败，请检查网络连接后刷新页面');
         return;
     }
     console.log('AMap对象已加载');
@@ -179,30 +212,40 @@ function initMap() {
         return;
     }
 
-    AMap.plugin(['AMap.PlaceSearch', 'AMap.Geolocation'], function() {
-        console.log('地图插件加载完成');
-        
-        placeSearch = new AMap.PlaceSearch({
-            pageSize: 10,
-            pageIndex: 1
-        });
-        console.log('PlaceSearch插件初始化完成');
+    // 加载地图插件
+    try {
+        AMap.plugin(['AMap.PlaceSearch', 'AMap.Geolocation', 'AMap.Circle', 'AMap.GeometryUtil'], function() {
+            console.log('地图插件加载完成');
+            
+            placeSearch = new AMap.PlaceSearch({
+                pageSize: 10,
+                pageIndex: 1
+            });
+            console.log('PlaceSearch插件初始化完成');
 
-        geolocation = new AMap.Geolocation({
-            enableHighAccuracy: true,
-            timeout: 10000,
-            zoomToAccuracy: true
-        });
-        console.log('Geolocation插件初始化完成');
-        // 不自动添加控件到地图，使用自定义按钮
+            geolocation = new AMap.Geolocation({
+                enableHighAccuracy: true,
+                timeout: 10000,
+                zoomToAccuracy: true
+            });
+            console.log('Geolocation插件初始化完成');
+            // 不自动添加控件到地图，使用自定义按钮
 
-        // 延迟加载标记，确保地图完全初始化
-        setTimeout(function() {
-            loadMarkers();
-            console.log('地图初始化全部完成');
-            showStatus('地图加载完成，可以开始搜索', 'success');
-        }, 500);
-    });
+            // 延迟加载标记，确保地图完全初始化
+            setTimeout(function() {
+                try {
+                    loadMarkers();
+                    console.log('地图初始化全部完成');
+                    showStatus('地图加载完成，可以开始搜索', 'success');
+                } catch (e) {
+                    console.error('加载标记失败:', e);
+                }
+            }, 500);
+        });
+    } catch (e) {
+        console.error('加载地图插件失败:', e);
+        alert('地图插件加载失败: ' + e.message);
+    }
 
     map.on('moveend', function() {
         if (isPinningMode) {
@@ -210,6 +253,15 @@ function initMap() {
             updateCoordinateDisplay(center.lat, center.lng);
         }
     });
+}
+
+// 更新坐标显示
+function updateCoordinateDisplay(lat, lng) {
+    const latInput = document.getElementById('markerLat');
+    const lngInput = document.getElementById('markerLng');
+    
+    if (latInput) latInput.value = lat.toFixed(6);
+    if (lngInput) lngInput.value = lng.toFixed(6);
 }
 
 // ============ 分类管理功能 ============
@@ -1067,6 +1119,132 @@ function displayMarkerOnMap(marker) {
     }
 }
 
+// 获取分类名称
+function getCategoryName(categoryId) {
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.name : '默认';
+}
+
+// 获取分类颜色
+function getCategoryColor(categoryId) {
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.color : 'blue';
+}
+
+// 调整地图视图以适应所有标记
+function fitMapToMarkers() {
+    if (!map || markers.length === 0) return;
+    
+    try {
+        // 创建边界对象
+        const bounds = new AMap.Bounds();
+        
+        // 添加所有标记的位置到边界
+        markers.forEach(function(marker) {
+            bounds.extend([marker.lng, marker.lat]);
+        });
+        
+        // 调整地图视图
+        map.setBounds(bounds);
+        console.log('地图视图已调整到包含所有标记');
+    } catch (e) {
+        console.error('调整地图视图失败:', e);
+    }
+}
+
+// 更新标记列表显示
+function updateMarkersList() {
+    const listDiv = document.getElementById('markersList');
+    if (!listDiv) return;
+    
+    if (markers.length === 0) {
+        listDiv.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">暂无标注</p>';
+        return;
+    }
+    
+    let html = '';
+    markers.forEach(function(marker, index) {
+        const category = categories.find(c => c.id === marker.categoryId);
+        const color = category ? getColorValue(category.color) : '#2196F3';
+        
+        html += '<div style="padding: 10px; margin-bottom: 8px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid ' + color + ';">' +
+            '<div style="font-weight: bold; color: #333; margin-bottom: 5px;">' + marker.name + '</div>' +
+            '<div style="font-size: 12px; color: #666;">' + (marker.description || '无描述') + '</div>' +
+            '</div>';
+    });
+    
+    listDiv.innerHTML = html;
+}
+
+// 重新加载所有标记到地图
+function reloadMarkersOnMap() {
+    console.log('开始重新加载标记到地图...');
+    
+    // 清除所有当前显示的标记
+    currentMarkers.forEach(function(item) {
+        item.marker.setMap(null);
+    });
+    currentMarkers = [];
+    
+    // 重新加载所有标记
+    markers.forEach(function(marker) {
+        try {
+            displayMarkerOnMap(marker);
+        } catch (e) {
+            console.error('重新显示标记失败:', e);
+        }
+    });
+    
+    console.log('标记重新加载完成，当前显示的标记数量:', currentMarkers.length);
+}
+
+// 删除标记
+function deleteMarker(markerId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    if (!confirm('确定要删除这个标注吗？')) {
+        return;
+    }
+    
+    // 找到并移除标记
+    const markerIndex = markers.findIndex(m => m.id === markerId);
+    if (markerIndex > -1) {
+        markers.splice(markerIndex, 1);
+        
+        // 保存到 localStorage
+        saveMarkers();
+        
+        // 重新加载标记到地图
+        reloadMarkersOnMap();
+        
+        // 更新标记列表
+        updateMarkersList();
+        
+        // 更新统计信息
+        updateMarkerStats();
+        
+        showStatus('标注已删除', 'success');
+    }
+}
+
+// 聚焦到指定标记
+function focusOnMarker(lng, lat, markerId) {
+    if (!map) return;
+    
+    // 设置地图中心
+    map.setCenter([lng, lat]);
+    map.setZoom(16);
+    
+    // 找到对应的标记并打开信息窗口
+    const markerItem = currentMarkers.find(item => item.data.id === markerId);
+    if (markerItem) {
+        // 触发标记的点击事件
+        markerItem.marker.emit('click');
+    }
+}
+
 function highlightMarkerInList(markerId) {
     try {
         // 检查是否存在marker-item元素
@@ -1215,6 +1393,18 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
               Math.sin(dLng/2) * Math.sin(dLng/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
+}
+
+// 获取分类名称
+function getCategoryName(categoryId) {
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.name : '默认';
+}
+
+// 获取分类颜色
+function getCategoryColor(categoryId) {
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.color : 'blue';
 }
 
 function displaySearchResults(nearbyMarkers, radius, center) {
@@ -1404,19 +1594,22 @@ function reloadMarkersOnMap() {
 }
 
 function saveMarkers() {
-  // 保存到云开发
-  db.collection('markers').doc('all-markers').set({
-    markers: markers,
-    updatedAt: new Date().toISOString()
-  }).then(() => {
-    console.log("标注数据已保存到云开发");
-    // 同时保存到 localStorage 作为备份
-    localStorage.setItem('myMapMarkers', JSON.stringify(markers));
-  }).catch((error) => {
-    console.error("保存数据失败:", error);
-    // 如果云开发保存失败，保存到 localStorage
-    localStorage.setItem('myMapMarkers', JSON.stringify(markers));
-  });
+  // 先保存到 localStorage（确保数据不会丢失）
+  localStorage.setItem('myMapMarkers', JSON.stringify(markers));
+  
+  // 如果云开发已启用，同时保存到云端
+  if (cloudEnabled && db) {
+    db.collection('markers').doc('all-markers').set({
+      markers: markers,
+      updatedAt: new Date().toISOString()
+    }).then(() => {
+      console.log("标注数据已保存到云开发");
+    }).catch((error) => {
+      console.error("保存到云开发失败:", error);
+    });
+  } else {
+    console.log("云开发未启用，仅保存到 localStorage");
+  }
 }
 
 function loadMarkers() {
@@ -1429,32 +1622,24 @@ function loadMarkers() {
   // 初始化 markers 数组
   markers = [];
   
-  // 优先从云开发加载数据
-  db.collection('markers').doc('all-markers').get().then((res) => {
-    if (res.data()) {
-      markers = res.data().markers || [];
-      console.log("从云开发加载标注数据:", markers.length);
-      // 保存到 localStorage 作为备份
-      localStorage.setItem('myMapMarkers', JSON.stringify(markers));
-    } else {
-      // 如果云开发没有数据，从 localStorage 加载
-      const saved = localStorage.getItem('myMapMarkers');
-      if (saved) {
-        try {
-          const parsedMarkers = JSON.parse(saved);
-          if (Array.isArray(parsedMarkers)) {
-            markers = parsedMarkers.filter(function(marker) {
-              return marker && marker.lat && marker.lng && typeof marker.lat === 'number' && typeof marker.lng === 'number';
-            });
-            console.log("从 localStorage 加载标注数据:", markers.length);
-          }
-        } catch (e) {
-          console.error('从 localStorage 加载标注失败:', e);
-          markers = [];
+  // 定义从 localStorage 加载数据的函数
+  function loadFromLocalStorage() {
+    const saved = localStorage.getItem('myMapMarkers');
+    if (saved) {
+      try {
+        const parsedMarkers = JSON.parse(saved);
+        if (Array.isArray(parsedMarkers)) {
+          markers = parsedMarkers.filter(function(marker) {
+            return marker && marker.lat && marker.lng && typeof marker.lat === 'number' && typeof marker.lng === 'number';
+          });
+          console.log("从 localStorage 加载标注数据:", markers.length);
         }
-      } else {
-        console.log("没有找到标注数据");
+      } catch (e) {
+        console.error('从 localStorage 加载标注失败:', e);
+        markers = [];
       }
+    } else {
+      console.log("localStorage 中没有找到标注数据");
     }
     
     // 显示标记在地图上
@@ -1475,39 +1660,48 @@ function loadMarkers() {
         fitMapToMarkers();
       }, 1000);
     }
-  }).catch((error) => {
-    console.error("加载数据失败:", error);
-    // 如果云开发加载失败，从 localStorage 加载
-    const saved = localStorage.getItem('myMapMarkers');
-    if (saved) {
-      try {
-        const parsedMarkers = JSON.parse(saved);
-        if (Array.isArray(parsedMarkers)) {
-          markers = parsedMarkers.filter(function(marker) {
-            return marker && marker.lat && marker.lng && typeof marker.lat === 'number' && typeof marker.lng === 'number';
-          });
-          console.log("从 localStorage 加载标注数据:", markers.length);
-          // 显示标记在地图上
-          markers.forEach(function(marker) {
-            try {
-              displayMarkerOnMap(marker);
-            } catch (e) {
-              console.error('显示标记失败:', e);
-            }
-          });
-          updateMarkersList();
-          if (markers.length > 0) {
-            setTimeout(function() {
-              fitMapToMarkers();
-            }, 1000);
+  }
+  
+  // 如果云开发已启用，尝试从云端加载
+  if (cloudEnabled && db) {
+    db.collection('markers').doc('all-markers').get().then((res) => {
+      if (res.data() && res.data().markers && res.data().markers.length > 0) {
+        markers = res.data().markers || [];
+        console.log("从云开发加载标注数据:", markers.length);
+        // 保存到 localStorage 作为备份
+        localStorage.setItem('myMapMarkers', JSON.stringify(markers));
+        
+        // 显示标记在地图上
+        markers.forEach(function(marker) {
+          try {
+            displayMarkerOnMap(marker);
+          } catch (e) {
+            console.error('显示标记失败:', e);
           }
+        });
+        
+        // 更新 UI
+        updateMarkersList();
+        
+        // 调整地图视图
+        if (markers.length > 0) {
+          setTimeout(function() {
+            fitMapToMarkers();
+          }, 1000);
         }
-      } catch (e) {
-        console.error('从 localStorage 加载标注失败:', e);
-        markers = [];
+      } else {
+        console.log("云开发中没有数据，从 localStorage 加载");
+        loadFromLocalStorage();
       }
-    }
-  });
+    }).catch((error) => {
+      console.error("从云开发加载数据失败:", error);
+      loadFromLocalStorage();
+    });
+  } else {
+    // 云开发未启用，直接从 localStorage 加载
+    console.log("云开发未启用，从 localStorage 加载数据");
+    loadFromLocalStorage();
+  }
   
   console.log('loadMarkers 完成，当前 markers 数量:', markers.length);
 }
@@ -1523,6 +1717,189 @@ function showStatus(message, type) {
     } else {
         console.log('Status message:', message, '(type:', type, ')');
     }
+}
+
+// 定位我的位置
+function locateMyPosition() {
+    if (!geolocation) {
+        showStatus('定位服务未初始化', 'error');
+        return;
+    }
+    
+    showStatus('正在定位...', 'info');
+    
+    geolocation.getCurrentPosition(function(status, result) {
+        if (status === 'complete') {
+            const position = result.position;
+            currentPosition = position;
+            
+            // 将地图中心移动到当前位置
+            map.setCenter([position.lng, position.lat]);
+            map.setZoom(16);
+            
+            showStatus('定位成功', 'success');
+        } else {
+            showStatus('定位失败: ' + result.message, 'error');
+        }
+    });
+}
+
+// 搜索附近标注
+function searchNearbyMarkers() {
+    const radiusInput = document.getElementById('searchRadius');
+    if (!radiusInput) return;
+    
+    const radius = parseInt(radiusInput.value) || 1000;
+    
+    if (!currentPosition) {
+        showStatus('请先定位您的位置', 'error');
+        return;
+    }
+    
+    // 清除之前的搜索圆圈
+    if (searchCircle) {
+        searchCircle.setMap(null);
+    }
+    
+    // 绘制搜索范围圆圈
+    searchCircle = new AMap.Circle({
+        center: [currentPosition.lng, currentPosition.lat],
+        radius: radius,
+        strokeColor: '#2196F3',
+        strokeWeight: 2,
+        strokeOpacity: 0.5,
+        fillColor: '#2196F3',
+        fillOpacity: 0.1
+    });
+    searchCircle.setMap(map);
+    
+    // 搜索范围内的标记
+    const nearbyMarkers = [];
+    markers.forEach(function(marker) {
+        const distance = AMap.GeometryUtil.distance(
+            [currentPosition.lng, currentPosition.lat],
+            [marker.lng, marker.lat]
+        );
+        if (distance <= radius) {
+            nearbyMarkers.push({
+                marker: marker,
+                distance: distance
+            });
+        }
+    });
+    
+    // 按距离排序
+    nearbyMarkers.sort(function(a, b) {
+        return a.distance - b.distance;
+    });
+    
+    // 显示结果
+    showNearbyResults(nearbyMarkers, radius);
+}
+
+// 显示附近搜索结果
+function showNearbyResults(nearbyMarkers, radius) {
+    const listDiv = document.getElementById('markersList');
+    if (!listDiv) return;
+    
+    if (nearbyMarkers.length === 0) {
+        listDiv.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">附近 ' + radius + ' 米内没有标注</p>';
+        return;
+    }
+    
+    let html = '<h4 style="margin-bottom: 15px; color: #333;">附近 ' + radius + ' 米内找到 ' + nearbyMarkers.length + ' 个标注</h4>';
+    
+    nearbyMarkers.forEach(function(item) {
+        const marker = item.marker;
+        const distance = Math.round(item.distance);
+        const category = categories.find(c => c.id === marker.categoryId);
+        const color = category ? getColorValue(category.color) : '#2196F3';
+        
+        html += '<div style="padding: 10px; margin-bottom: 8px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid ' + color + ';">' +
+            '<div style="font-weight: bold; color: #333; margin-bottom: 5px;">' + marker.name + '</div>' +
+            '<div style="font-size: 12px; color: #666;">' + (marker.description || '无描述') + '</div>' +
+            '<div style="font-size: 12px; color: #2196F3; margin-top: 5px;">距离: ' + distance + ' 米</div>' +
+            '</div>';
+    });
+    
+    listDiv.innerHTML = html;
+    showStatus('找到 ' + nearbyMarkers.length + ' 个附近标注', 'success');
+}
+
+// 添加标注
+function addMarker(name, description, lat, lng, categoryId) {
+    if (!name || isNaN(lat) || isNaN(lng)) {
+        showStatus('标注信息不完整', 'error');
+        return false;
+    }
+    
+    // 创建新标记
+    const marker = {
+        id: Date.now().toString(),
+        name: name,
+        description: description || '',
+        lat: lat,
+        lng: lng,
+        categoryId: categoryId || 'default',
+        createdAt: new Date().toLocaleString()
+    };
+    
+    // 添加到标记数组
+    markers.push(marker);
+    
+    // 保存到存储
+    saveMarkers();
+    
+    // 显示在地图上
+    if (map) {
+        displayMarkerOnMap(marker);
+    }
+    
+    // 更新列表
+    updateMarkersList();
+    updateMarkerStats();
+    
+    showStatus('标注添加成功', 'success');
+    return true;
+}
+
+// 从表单添加标注（供 add-marker.html 调用）
+window.addMarkerFromForm = addMarker;
+
+// 搜索地点
+function searchPlace() {
+    const input = document.getElementById('placeSearchInput');
+    if (!input || !input.value.trim()) {
+        showStatus('请输入搜索关键词', 'error');
+        return;
+    }
+    
+    const keyword = input.value.trim();
+    showStatus('正在搜索: ' + keyword, 'info');
+    
+    if (!placeSearch) {
+        showStatus('搜索服务未初始化', 'error');
+        return;
+    }
+    
+    placeSearch.search(keyword, function(status, result) {
+        if (status === 'complete' && result.info === 'OK') {
+            if (result.poiList && result.poiList.pois.length > 0) {
+                const poi = result.poiList.pois[0];
+                const location = poi.location;
+                
+                // 将地图中心移动到搜索结果
+                map.setCenter([location.lng, location.lat]);
+                map.setZoom(16);
+                
+                showStatus('搜索成功: ' + poi.name, 'success');
+            } else {
+                showStatus('未找到相关地点', 'error');
+            }
+        } else {
+            showStatus('搜索失败: ' + status, 'error');
+        }
+    });
 }
 
 // 回车键搜索

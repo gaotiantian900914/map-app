@@ -581,7 +581,7 @@
                     💡 提示：先搜索地点，然后拖动地图微调位置，最后填写信息添加标注
                 </div>
 
-                <button class="submit-btn" id="submitBtn" onclick="addMarker()">添加标注</button>
+                <button class="submit-btn" id="submitBtn" onclick="submitMarker()">添加标注</button>
             </div>
 
             <!-- 批量标注理想充电站 -->
@@ -629,62 +629,41 @@
         </div>
     </div>
 
+    <!-- 云开发 SDK -->
+    <script src="https://imgcache.qq.com/qcloud/tcbjs/1.11.1/tcb.js" onerror="console.warn('云开发SDK加载失败')"></script>
     <!-- 高德地图API -->
     <script src="https://webapi.amap.com/maps?v=1.4.15&key=45461b14046c9bda310ce713420c84d4"></script>
+    <!-- 添加版本号避免缓存 -->
+    <script src="app.js?v=4"></script>
     <script>
-        // 确保AMap加载完成后再加载app.js
-        window.onload = function() {
-            if (typeof AMap !== 'undefined') {
-                console.log('AMap加载完成');
-                // 动态加载app.js
-                const script = document.createElement('script');
-                script.src = 'app.js';
-                script.onload = function() {
-                    console.log('app.js加载完成');
-                    // 初始化应用
-                    if (typeof initializeApp === 'function') {
-                        initializeApp();
-                    } else {
-                        console.error('initializeApp函数未定义');
-                        // 手动初始化
-                        if (typeof loadCategories === 'function') {
-                            loadCategories();
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            console.log('页面加载完成，开始初始化...');
+            
+            // 绑定批量添加按钮事件
+            setTimeout(function() {
+                const idealBtn = document.getElementById('batchAddIdealBtn');
+                const xpengBtn = document.getElementById('batchAddXpengBtn');
+                if (idealBtn) {
+                    idealBtn.onclick = function() {
+                        if (typeof batchAddIdealChargingStations === 'function') {
+                            batchAddIdealChargingStations();
+                        } else {
+                            alert('批量添加功能未加载，请刷新页面重试');
                         }
-                        if (typeof initMap === 'function') {
-                            initMap();
+                    };
+                }
+                if (xpengBtn) {
+                    xpengBtn.onclick = function() {
+                        if (typeof batchAddXpengChargingStations === 'function') {
+                            batchAddXpengChargingStations();
+                        } else {
+                            alert('批量添加功能未加载，请刷新页面重试');
                         }
-                    }
-                    
-                    // 绑定批量添加按钮事件
-                    setTimeout(function() {
-                        const idealBtn = document.getElementById('batchAddIdealBtn');
-                        const xpengBtn = document.getElementById('batchAddXpengBtn');
-                        if (idealBtn) {
-                            idealBtn.onclick = function() {
-                                if (typeof batchAddIdealChargingStations === 'function') {
-                                    batchAddIdealChargingStations();
-                                } else {
-                                    alert('批量添加功能未加载，请刷新页面重试');
-                                }
-                            };
-                        }
-                        if (xpengBtn) {
-                            xpengBtn.onclick = function() {
-                                if (typeof batchAddXpengChargingStations === 'function') {
-                                    batchAddXpengChargingStations();
-                                } else {
-                                    alert('批量添加功能未加载，请刷新页面重试');
-                                }
-                            };
-                        }
-                    }, 1000);
-                };
-                document.body.appendChild(script);
-            } else {
-                console.error('AMap加载失败');
-                alert('地图加载失败，请检查网络连接');
-            }
-        };
+                    };
+                }
+            }, 1000);
+        });
         
         // 更新add-marker.html的分类选择器
         function updateAddMarkerCategorySelect() {
@@ -908,8 +887,8 @@
             }
         }
         
-        // 添加标注
-        function addMarker() {
+        // 提交标注
+        function submitMarker() {
             const name = document.getElementById('markerName').value.trim();
             const desc = document.getElementById('markerDesc').value.trim();
             const lat = document.getElementById('markerLat').value;
@@ -935,7 +914,9 @@
             const categoryId = selectedOption.dataset.id;
             
             // 调用app.js中的addMarker函数
-            if (typeof addMarker === 'function') {
+            if (typeof window.addMarkerFromForm === 'function') {
+                window.addMarkerFromForm(name, desc, parseFloat(lat), parseFloat(lng), categoryId);
+            } else if (typeof addMarker === 'function') {
                 addMarker(name, desc, parseFloat(lat), parseFloat(lng), categoryId);
             } else {
                 showStatus('添加标注功能不可用', 'error');
