@@ -1133,20 +1133,37 @@ function getCategoryColor(categoryId) {
 
 // 调整地图视图以适应所有标记
 function fitMapToMarkers() {
-    if (!map || markers.length === 0) return;
+    if (!map || markers.length === 0) {
+        console.log('地图未初始化或没有标记，跳过调整视图');
+        return;
+    }
     
     try {
+        // 过滤出有效的标记
+        const validMarkers = markers.filter(function(marker) {
+            return marker && 
+                   typeof marker.lat === 'number' && 
+                   typeof marker.lng === 'number' &&
+                   !isNaN(marker.lat) && 
+                   !isNaN(marker.lng);
+        });
+        
+        if (validMarkers.length === 0) {
+            console.log('没有有效的标记，跳过调整视图');
+            return;
+        }
+        
         // 创建边界对象
         const bounds = new AMap.Bounds();
         
-        // 添加所有标记的位置到边界
-        markers.forEach(function(marker) {
+        // 添加所有有效标记的位置到边界
+        validMarkers.forEach(function(marker) {
             bounds.extend([marker.lng, marker.lat]);
         });
         
         // 调整地图视图
         map.setBounds(bounds);
-        console.log('地图视图已调整到包含所有标记');
+        console.log('地图视图已调整到包含所有标记，有效标记数量:', validMarkers.length);
     } catch (e) {
         console.error('调整地图视图失败:', e);
     }
@@ -2812,9 +2829,131 @@ function showStatus(message, type) {
 
 // 当页面加载完成时，检查是否需要显示表格视图
 window.addEventListener('load', function() {
-    // 检查URL参数，支持直接访问表格视图
+    // 检查 URL 参数，支持直接访问表格视图
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('view') === 'table') {
         switchTab('table');
     }
 });
+
+// 批量添加理想充电站
+function batchAddIdealChargingStations() {
+    console.log('开始批量添加理想充电站...');
+    showStatus('正在批量添加理想充电站...', 'info');
+    
+    // 示例数据：深圳市各区的理想充电站位置
+    const chargingStations = [
+        { name: '理想充电站 - 福田区', lat: 22.5217, lng: 114.0557, district: '福田区' },
+        { name: '理想充电站 - 南山区', lat: 22.5429, lng: 113.9303, district: '南山区' },
+        { name: '理想充电站 - 罗湖区', lat: 22.5669, lng: 114.1419, district: '罗湖区' },
+        { name: '理想充电站 - 宝安区', lat: 22.5539, lng: 113.8837, district: '宝安区' },
+        { name: '理想充电站 - 龙岗区', lat: 22.7206, lng: 114.2476, district: '龙岗区' },
+        { name: '理想充电站 - 盐田区', lat: 22.5548, lng: 114.2395, district: '盐田区' },
+        { name: '理想充电站 - 龙华区', lat: 22.6573, lng: 114.0297, district: '龙华区' },
+        { name: '理想充电站 - 坪山区', lat: 22.6930, lng: 114.3458, district: '坪山区' },
+        { name: '理想充电站 - 光明区', lat: 22.7537, lng: 113.9353, district: '光明区' },
+        { name: '理想充电站 - 大鹏新区', lat: 22.5940, lng: 114.4677, district: '大鹏新区' }
+    ];
+    
+    // 找到"充电站"分类
+    const chargingCategory = categories.find(c => c.name === '充电站' || c.name === '充电桩');
+    const categoryId = chargingCategory ? chargingCategory.id : 'default';
+    
+    let addedCount = 0;
+    
+    chargingStations.forEach(function(station, index) {
+        setTimeout(function() {
+            const marker = {
+                id: 'ideal_' + Date.now() + '_' + index,
+                name: station.name,
+                description: '理想汽车充电站 - ' + station.district,
+                lat: station.lat,
+                lng: station.lng,
+                categoryId: categoryId,
+                createdAt: new Date().toLocaleString()
+            };
+            
+            markers.push(marker);
+            addedCount++;
+            
+            // 显示在地图上
+            if (map) {
+                displayMarkerOnMap(marker);
+            }
+            
+            // 所有标记添加完成后
+            if (addedCount === chargingStations.length) {
+                saveMarkers();
+                updateMarkersList();
+                updateMarkerStats();
+                showStatus('成功添加 ' + addedCount + ' 个理想充电站', 'success');
+                
+                // 调整地图视图
+                setTimeout(function() {
+                    fitMapToMarkers();
+                }, 500);
+            }
+        }, index * 100); // 每个标记间隔 100ms 添加
+    });
+}
+
+// 批量添加小鹏充电站
+function batchAddXiaopengChargingStations() {
+    console.log('开始批量添加小鹏充电站...');
+    showStatus('正在批量添加小鹏充电站...', 'info');
+    
+    // 示例数据：深圳市各区的鹏充电站位置
+    const chargingStations = [
+        { name: '小鹏充电站 - 福田区', lat: 22.5329, lng: 114.0633, district: '福田区' },
+        { name: '小鹏充电站 - 南山区', lat: 22.5531, lng: 113.9420, district: '南山区' },
+        { name: '小鹏充电站 - 罗湖区', lat: 22.5771, lng: 114.1321, district: '罗湖区' },
+        { name: '小鹏充电站 - 宝安区', lat: 22.5641, lng: 113.8939, district: '宝安区' },
+        { name: '小鹏充电站 - 龙岗区', lat: 22.7308, lng: 114.2578, district: '龙岗区' },
+        { name: '小鹏充电站 - 盐田区', lat: 22.5650, lng: 114.2497, district: '盐田区' },
+        { name: '小鹏充电站 - 龙华区', lat: 22.6675, lng: 114.0399, district: '龙华区' },
+        { name: '小鹏充电站 - 坪山区', lat: 22.7032, lng: 114.3560, district: '坪山区' },
+        { name: '小鹏充电站 - 光明区', lat: 22.7639, lng: 113.9455, district: '光明区' },
+        { name: '小鹏充电站 - 大鹏新区', lat: 22.6042, lng: 114.4779, district: '大鹏新区' }
+    ];
+    
+    // 找到"充电站"分类
+    const chargingCategory = categories.find(c => c.name === '充电站' || c.name === '充电桩');
+    const categoryId = chargingCategory ? chargingCategory.id : 'default';
+    
+    let addedCount = 0;
+    
+    chargingStations.forEach(function(station, index) {
+        setTimeout(function() {
+            const marker = {
+                id: 'xiaopeng_' + Date.now() + '_' + index,
+                name: station.name,
+                description: '小鹏汽车充电站 - ' + station.district,
+                lat: station.lat,
+                lng: station.lng,
+                categoryId: categoryId,
+                createdAt: new Date().toLocaleString()
+            };
+            
+            markers.push(marker);
+            addedCount++;
+            
+            // 显示在地图上
+            if (map) {
+                displayMarkerOnMap(marker);
+            }
+            
+            // 所有标记添加完成后
+            if (addedCount === chargingStations.length) {
+                saveMarkers();
+                updateMarkersList();
+                updateMarkerStats();
+                showStatus('成功添加 ' + addedCount + ' 个小鹏充电站', 'success');
+                
+                // 调整地图视图
+                setTimeout(function() {
+                    fitMapToMarkers();
+                }, 500);
+            }
+        }, index * 100); // 每个标记间隔 100ms 添加
+    });
+}
