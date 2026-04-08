@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地图测试</title>
+    <style>
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <h1>地图加载测试</h1>
+    <div id="map"></div>
+    
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=45461b14046c9bda310ce713420c84d4"></script>
+    <script>
+        console.log('开始加载地图...');
+        
+        // 检查AMap对象
+        if (typeof AMap === 'undefined') {
+            console.error('AMap对象未定义');
+        } else {
+            console.log('AMap对象已加载');
+        }
+        
+        // 初始化地图
+        var map = new AMap.Map('map', {
+            zoom: 13,
+            center: [113.874531, 22.558146]
+        });
+        
+        console.log('地图初始化完成:', map);
+    </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地图加载测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #map {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>地图加载测试</h1>
+    <div id="status" class="status"></div>
+    <div id="map"></div>
+    
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=45461b14046c9bda310ce713420c84d4"></script>
+    <script>
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+        
+        function initMap() {
+            showStatus('开始加载地图...', 'success');
+            
+            if (typeof AMap === 'undefined') {
+                showStatus('AMap对象未定义，地图API加载失败', 'error');
+                console.error('AMap对象未定义');
+                return;
+            }
+            
+            showStatus('AMap对象已加载，开始初始化地图...', 'success');
+            
+            const mapContainer = document.getElementById('map');
+            if (!mapContainer) {
+                showStatus('地图容器不存在', 'error');
+                console.error('地图容器不存在');
+                return;
+            }
+            
+            if (mapContainer.offsetHeight === 0) {
+                mapContainer.style.height = '600px';
+                showStatus('地图容器高度为0，已设置默认高度', 'success');
+            }
+            
+            try {
+                const map = new AMap.Map('map', {
+                    zoom: 13,
+                    center: [113.874531, 22.558146]
+                });
+                showStatus('地图初始化成功！', 'success');
+                console.log('地图初始化成功:', map);
+            } catch (e) {
+                showStatus('地图初始化失败: ' + e.message, 'error');
+                console.error('地图初始化失败:', e);
+            }
+        }
+        
+        // 页面加载完成后初始化地图
+        window.addEventListener('load', initMap);
+    </script>
+</body>
+</html>

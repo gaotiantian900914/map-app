@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的地图标注工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部样式 */
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .stat-item .number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .stat-item .label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Tab 导航样式 */
+        .tab-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            padding: 5px;
+        }
+
+        .tab-item {
+            flex: 1;
+            padding: 15px 30px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            position: relative;
+            border-radius: 8px;
+        }
+
+        .tab-item:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .tab-item.active {
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            min-height: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            align-items: stretch;
+        }
+
+        .sidebar {
+            width: 380px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .map-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            height: 600px;
+            min-height: 600px;
+            position: relative;
+            display: block;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%);
+        }
+
+        .markers-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .marker-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .marker-item:hover {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-color: #2196F3;
+            transform: translateX(5px);
+        }
+
+        .marker-item h4 {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .marker-item p {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .marker-item .delete-btn {
+            float: right;
+            color: #f44336;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .marker-item .delete-btn:hover {
+            background: #ffebee;
+        }
+
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 1px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .result-item:hover {
+            background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+            transform: translateX(5px);
+        }
+
+        .result-item h4 {
+            color: #2e7d32;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .result-item p {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .distance {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status.success {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            color: #2e7d32;
+            border: 1px solid #4CAF50;
+        }
+
+        .status.error {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            color: #c62828;
+            border: 1px solid #f44336;
+        }
+
+        .status.info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            border: 1px solid #2196F3;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .place-search-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .place-item {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 1px solid #FF9800;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .place-item:hover {
+            background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
+            transform: translateX(5px);
+        }
+
+        .place-item h4 {
+            color: #e65100;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .place-item p {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .place-item .address {
+            color: #999;
+            font-size: 11px;
+        }
+
+        /* 分类样式 */
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%);
+            border-radius: 8px;
+            border-left: 4px solid;
+            transition: all 0.3s;
+        }
+
+        .category-item:hover {
+            transform: translateX(3px);
+        }
+
+        .category-item .category-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .category-item .category-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .category-item .category-actions button {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .category-item .btn-edit {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+
+        .category-item .btn-delete {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+
+        .marker-category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            color: white;
+            margin-left: 5px;
+            font-weight: 500;
+        }
+
+        /* 表格样式优化 */
+        .table-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .table-content {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .table-container h3 {
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        th:first-child {
+            border-radius: 8px 0 0 0;
+        }
+
+        th:last-child {
+            border-radius: 0 8px 0 0;
+        }
+
+        td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: #f5f7fa;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btns button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-view {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+
+        .btn-delete-small {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+
+        /* 加载动画 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 15px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-stats {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: none;
+            }
+
+            #map {
+                height: 400px;
+            }
+
+            .tab-nav {
+                flex-direction: column;
+            }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🗺️ 我的地图标注工具</h1>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="number" id="totalMarkers">0</div>
+                    <div class="label">总标注</div>
+                </div>
+                <div class="stat-item">
+                    <div class="number" id="totalCategories">0</div>
+                    <div class="label">分类</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 导航 -->
+        <div class="tab-nav">
+            <button class="tab-item active" onclick="switchTab('map')">
+                🗺️ 地图视图
+            </button>
+            <button class="tab-item" onclick="switchTab('add')">
+                ➕ 新增标注
+            </button>
+            <button class="tab-item" onclick="switchTab('table')">
+                📋 标注表格
+            </button>
+        </div>
+
+        <!-- 地图视图内容 -->
+        <div id="mapView" class="main-content" style="display: flex;">
+            <div class="sidebar">
+                <!-- 地点搜索 -->
+                <div class="section">
+                    <h3>🔎 搜索地点</h3>
+                    <div class="form-group">
+                        <label>输入地点名称</label>
+                        <input type="text" id="placeSearchInput" placeholder="例如：天安门、故宫博物院" onkeypress="if(event.key==='Enter')searchPlace()">
+                    </div>
+                    <button class="btn btn-warning" onclick="searchPlace()">
+                        🔍 搜索地点
+                    </button>
+                    <div id="placeSearchResults" class="place-search-results"></div>
+                </div>
+
+                <!-- 定位功能 -->
+                <div class="section">
+                    <h3>📍 定位功能</h3>
+                    <button class="btn btn-secondary" onclick="locateMe()">
+                        📡 定位我的位置
+                    </button>
+                    <div id="locationStatus"></div>
+                </div>
+
+                <!-- 附近搜索 -->
+                <div class="section">
+                    <h3>🔍 附近搜索</h3>
+                    <div class="form-group">
+                        <label>搜索半径（米）</label>
+                        <input type="number" id="searchRadius" value="1000" min="100" max="50000">
+                    </div>
+                    <button class="btn btn-primary" onclick="searchNearby()">
+                        🎯 以地图中心搜索附近标注
+                    </button>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+
+                <!-- 标注列表 -->
+                <div class="section">
+                    <h3>📋 我的标注列表</h3>
+                    <button class="btn btn-danger" onclick="clearAllMarkers()">
+                        🗑️ 清空所有标注
+                    </button>
+                    <button class="btn btn-secondary" onclick="openCategoryManager()">
+                        🏷️ 分类管理
+                    </button>
+                    <div id="markersList" class="markers-list"></div>
+                </div>
+            </div>
+
+            <div class="map-container">
+                <div id="map"></div>
+                <!-- 固定中心点标记 -->
+                <div id="centerPin" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 1000; pointer-events: none;">
+                    <svg width="30" height="40" viewBox="0 0 30 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25c0-8.284-6.716-15-15-15z" fill="#FF5722"/>
+                        <circle cx="15" cy="15" r="6" fill="white"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 表格视图内容 -->
+        <div id="tableView" class="main-content" style="display: none;">
+            <div class="sidebar">
+                <!-- 表格筛选 -->
+                <div class="section">
+                    <h3>🔍 筛选标注</h3>
+                    <div class="form-group">
+                        <label>按类型筛选</label>
+                        <select id="categoryFilter" onchange="filterTableByCategory()">
+                            <option value="all">全部类型</option>
+                            <!-- 动态生成分类选项 -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>搜索关键词</label>
+                        <input type="text" id="tableSearchInput" placeholder="输入名称或地址" onkeyup="filterTableBySearch()">
+                    </div>
+                    <button class="btn btn-primary btn-block" onclick="exportMarkers()">
+                        💾 导出标注
+                    </button>
+                </div>
+                
+                <!-- 统计信息 -->
+                <div class="section">
+                    <h3>📊 统计信息</h3>
+                    <div id="markerStats" style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding: 20px; border-radius: 12px;">
+                        <!-- 动态生成统计信息 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <h3>📋 标注记录表格</h3>
+                <div class="table-controls">
+                    <div>
+                        <button class="btn btn-primary" onclick="exportMarkers()" style="width: auto; display: inline-block;">
+                            💾 导出标注
+                        </button>
+                        <button class="btn btn-warning" onclick="refreshMarkers()" style="width: auto; display: inline-block; margin-left: 10px;">
+                            🔄 刷新
+                        </button>
+                    </div>
+                    <button class="btn btn-danger" onclick="batchDeleteMarkers()" id="batchDeleteBtn" style="width: auto; display: inline-block;">
+                        🗑️ 批量删除 (0)
+                    </button>
+                </div>
+                <div class="table-content">
+                    <table id="markersTable">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="width: 18px; height: 18px; margin: 0; cursor: pointer;"></th>
+                                <th>ID</th>
+                                <th>名称</th>
+                                <th>类型</th>
+                                <th>地址</th>
+                                <th>坐标</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="markersTableBody">
+                            <!-- 动态生成表格内容 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noMarkersMessage" style="display: none; text-align: center; padding: 40px; color: #999;">
+                    暂无标注记录
+                </div>
+                <div id="pagination" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 云开发 SDK -->
+    <script src="https://imgcache.qq.com/qcloud/tcbjs/1.11.1/tcb.js"></script>
+    <!-- 高德地图API - 使用1.4.15版本，更稳定 -->
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=45461b14046c9bda310ce713420c84d4"></script>
+    <script>
+        // 确保AMap加载完成后再加载app.js
+        window.onload = function() {
+            if (typeof AMap !== 'undefined') {
+                console.log('AMap加载完成');
+                // 动态加载app.js
+                const script = document.createElement('script');
+                script.src = 'app.js';
+                script.onload = function() {
+                    console.log('app.js加载完成');
+                    // 页面加载完成后更新统计
+                    setTimeout(function() {
+                        // 检查变量是否存在，避免报错
+                        const totalMarkers = (typeof markers !== 'undefined') ? markers.length : 0;
+                        const totalCategories = (typeof categories !== 'undefined') ? categories.length : 0;
+                        const totalMarkersElement = document.getElementById('totalMarkers');
+                        const totalCategoriesElement = document.getElementById('totalCategories');
+                        if (totalMarkersElement) {
+                            totalMarkersElement.textContent = totalMarkers;
+                        }
+                        if (totalCategoriesElement) {
+                            totalCategoriesElement.textContent = totalCategories;
+                        }
+                    }, 1000);
+                };
+                document.body.appendChild(script);
+            } else {
+                console.error('AMap加载失败');
+                alert('地图加载失败，请检查网络连接');
+            }
+        };
+    </script>
+</body>
+</html>

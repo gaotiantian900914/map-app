@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新地图测试</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+        .container { display: flex; gap: 20px; }
+        .sidebar { width: 300px; }
+        .map-container { flex: 1; height: 600px; border: 1px solid #ddd; }
+        #map { width: 100%; height: 100%; }
+        .btn { padding: 10px; margin: 5px 0; width: 100%; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>新地图测试</h1>
+    
+    <div class="container">
+        <div class="sidebar">
+            <h3>功能测试</h3>
+            <button class="btn" onclick="testGeolocation()">测试定位</button>
+            <div id="status" class="status"></div>
+        </div>
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+    
+    <!-- 高德地图API -->
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=9b110f6d6acaf2e12af4a985617579ff"></script>
+    
+    <script>
+        let map;
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+        
+        function testGeolocation() {
+            showStatus('正在定位...', 'success');
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        showStatus('定位成功: ' + lat + ', ' + lng, 'success');
+                        
+                        // 移动地图到定位位置
+                        if (map) {
+                            map.setCenter([lng, lat]);
+                            map.setZoom(17);
+                        }
+                    },
+                    function(error) {
+                        showStatus('定位失败: ' + error.message, 'error');
+                    }
+                );
+            } else {
+                showStatus('浏览器不支持地理定位', 'error');
+            }
+        }
+        
+        window.onload = function() {
+            try {
+                // 初始化地图
+                map = new AMap.Map('map', {
+                    zoom: 13,
+                    center: [113.874531, 22.558146]
+                });
+                
+                // 添加控件
+                AMap.plugin(['AMap.ToolBar', 'AMap.Scale'], function() {
+                    map.addControl(new AMap.ToolBar());
+                    map.addControl(new AMap.Scale());
+                });
+                
+                showStatus('地图加载成功', 'success');
+                
+            } catch (e) {
+                showStatus('地图加载失败: ' + e.message, 'error');
+            }
+        };
+    </script>
+</body>
+</html>

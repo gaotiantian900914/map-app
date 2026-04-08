@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增标注 - 我的地图标注工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        /* 左侧面板 */
+        .left-panel {
+            width: 400px;
+            background: white;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .icon {
+            font-size: 20px;
+        }
+
+        /* 搜索框样式 */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-box button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-box button:hover {
+            background: #5a6fd6;
+        }
+
+        /* 定位按钮 */
+        .locate-btn {
+            width: 100%;
+            padding: 12px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .locate-btn:hover {
+            background: #1976D2;
+        }
+
+        /* 搜索结果 */
+        .search-results {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .place-item {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .place-item:hover {
+            background: #f5f5f5;
+            border-color: #667eea;
+        }
+
+        .place-item h4 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .place-item p {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* 分类选择器 */
+        .category-select {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .category-option {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .category-option:hover {
+            border-color: #667eea;
+        }
+
+        .category-option.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .category-option .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* 分类管理样式 */
+        .category-manager {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .category-list {
+            margin-top: 10px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .category-item .category-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .category-item .cat-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .category-item .category-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .category-item .cat-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .category-item .category-actions button {
+            padding: 4px 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .category-item .cat-actions button {
+            padding: 4px 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .category-actions .btn-edit {
+            background: #2196F3;
+            color: white;
+        }
+
+        .cat-actions .btn-edit {
+            background: #2196F3;
+            color: white;
+        }
+
+        .category-actions .btn-edit:hover {
+            background: #1976D2;
+        }
+
+        .cat-actions .btn-edit:hover {
+            background: #1976D2;
+        }
+
+        .category-actions .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .cat-actions .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+
+        .category-actions .btn-delete:hover {
+            background: #d32f2f;
+        }
+
+        .cat-actions .btn-delete:hover {
+            background: #d32f2f;
+        }
+
+        .add-category-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .add-category-form input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .add-category-form input[type="color"] {
+            width: 50px;
+            height: 40px;
+            padding: 2px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .add-category-form button {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .add-category-form button:hover {
+            background: #45a049;
+        }
+
+        /* 提交按钮 */
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 提示信息 */
+        .hint {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #1976D2;
+            margin-top: 15px;
+        }
+
+        /* 状态提示 */
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        /* 右侧地图 */
+        .right-panel {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+        }
+
+        /* 地图中心点标记 */
+        .center-marker {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .center-marker svg {
+            width: 40px;
+            height: 40px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        /* 定位模式提示 */
+        .pinning-mode {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff9800;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                width: 100%;
+                height: 50%;
+            }
+
+            .right-panel {
+                height: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-btn" onclick="goBack()">← 返回</button>
+        <h1>🗺️ 新增标注</h1>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <div class="container">
+        <!-- 左侧面板 -->
+        <div class="left-panel">
+            <!-- 状态消息 -->
+            <div id="statusMessage" class="status-message"></div>
+
+            <!-- 搜索定位区域 -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="icon">🔎</span>
+                    搜索地点
+                </div>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="例如：天安门、故宫博物院">
+                    <button onclick="searchPlace()">搜索</button>
+                </div>
+                <button class="locate-btn" onclick="locateMyPosition()">📍 定位我的位置</button>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+
+            <!-- 分类管理 -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="icon">🏷️</span>
+                    分类管理
+                </div>
+                <div class="category-manager">
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h4 style="margin: 0 0 15px 0; color: #333; font-size: 14px; font-weight: 600;">添加新分类</h4>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="newCategoryName" placeholder="输入分类名称" style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: all 0.3s;">
+                            <input type="color" id="newCategoryColor" value="#2196F3" title="选择颜色" style="width: 60px; height: 40px; padding: 2px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; background: white;">
+                            <button onclick="addCategory()" style="padding: 12px 20px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
+                                添加
+                            </button>
+                        </div>
+                    </div>
+                    <div id="categoryList" class="category-list">
+                        <!-- 动态生成分类列表 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 标注表单 -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="icon">➕</span>
+                    标注信息
+                </div>
+                <div class="form-group">
+                    <label>标注名称</label>
+                    <input type="text" id="markerName" placeholder="例如：我家、公司">
+                </div>
+
+                <div class="form-group">
+                    <label>选择分类</label>
+                    <div id="categorySelect" class="category-select">
+                        <!-- 动态生成分类选项 -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>描述信息</label>
+                    <textarea id="markerDesc" placeholder="添加一些描述..."></textarea>
+                </div>
+
+                <input type="hidden" id="markerLat">
+                <input type="hidden" id="markerLng">
+
+                <div class="hint">
+                    💡 提示：先搜索地点，然后拖动地图微调位置，最后填写信息添加标注
+                </div>
+
+                <button class="submit-btn" id="submitBtn" onclick="addMarker()">添加标注</button>
+            </div>
+
+            <!-- 批量标注理想充电站 -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="icon">⚡</span>
+                    批量标注理想充电站
+                </div>
+                <button class="submit-btn" style="background: #4CAF50;" id="batchAddIdealBtn">批量添加理想充电站</button>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">将自动标注深圳市所有区域的理想充电站</p>
+            </div>
+            
+            <!-- 批量标注小鹏充电站 -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="icon">🔋</span>
+                    批量标注小鹏充电站
+                </div>
+                <button class="submit-btn" style="background: #3366CC;" id="batchAddXpengBtn">批量添加小鹏充电站</button>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">将自动标注深圳市所有区域的小鹏充电站</p>
+            </div>
+            
+            <!-- 调试功能 -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="icon">🔧</span>
+                    调试功能
+                </div>
+                <button class="submit-btn" style="background: #999;" onclick="clearAllData()">清空所有数据</button>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">用于清除错误数据，重新开始</p>
+            </div>
+        </div>
+
+        <!-- 右侧地图 -->
+        <div class="right-panel">
+            <div id="map"></div>
+            <div class="center-marker">
+                <svg viewBox="0 0 24 24" fill="#f44336">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+            </div>
+            <div id="pinningMode" class="pinning-mode" style="display: none;">
+                📍 定位模式：拖动地图调整位置，点击"添加标注"保存
+            </div>
+        </div>
+    </div>
+
+    <!-- 高德地图API -->
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=45461b14046c9bda310ce713420c84d4"></script>
+    <script>
+        // 确保AMap加载完成后再加载app.js
+        window.onload = function() {
+            if (typeof AMap !== 'undefined') {
+                console.log('AMap加载完成');
+                // 动态加载app.js
+                const script = document.createElement('script');
+                script.src = 'app.js';
+                script.onload = function() {
+                    console.log('app.js加载完成');
+                    // 初始化应用
+                    if (typeof initializeApp === 'function') {
+                        initializeApp();
+                    } else {
+                        console.error('initializeApp函数未定义');
+                        // 手动初始化
+                        if (typeof loadCategories === 'function') {
+                            loadCategories();
+                        }
+                        if (typeof initMap === 'function') {
+                            initMap();
+                        }
+                    }
+                    
+                    // 绑定批量添加按钮事件
+                    setTimeout(function() {
+                        const idealBtn = document.getElementById('batchAddIdealBtn');
+                        const xpengBtn = document.getElementById('batchAddXpengBtn');
+                        if (idealBtn) {
+                            idealBtn.onclick = function() {
+                                if (typeof batchAddIdealChargingStations === 'function') {
+                                    batchAddIdealChargingStations();
+                                } else {
+                                    alert('批量添加功能未加载，请刷新页面重试');
+                                }
+                            };
+                        }
+                        if (xpengBtn) {
+                            xpengBtn.onclick = function() {
+                                if (typeof batchAddXpengChargingStations === 'function') {
+                                    batchAddXpengChargingStations();
+                                } else {
+                                    alert('批量添加功能未加载，请刷新页面重试');
+                                }
+                            };
+                        }
+                    }, 1000);
+                };
+                document.body.appendChild(script);
+            } else {
+                console.error('AMap加载失败');
+                alert('地图加载失败，请检查网络连接');
+            }
+        };
+        
+        // 更新add-marker.html的分类选择器
+        function updateAddMarkerCategorySelect() {
+            const categorySelect = document.getElementById('categorySelect');
+            if (!categorySelect) return;
+            
+            categorySelect.innerHTML = '';
+            
+            if (typeof categories !== 'undefined' && categories.length > 0) {
+                categories.forEach(function(cat) {
+                    const color = getColorValue(cat.color) || '#999';
+                    const option = document.createElement('div');
+                    option.className = 'category-option';
+                    option.dataset.id = cat.id;
+                    option.innerHTML = '<span class="color-dot" style="background: ' + color + '"></span>' + cat.name;
+                    option.onclick = function() {
+                        // 移除其他选项的选中状态
+                        document.querySelectorAll('.category-option').forEach(function(opt) {
+                            opt.classList.remove('selected');
+                        });
+                        // 添加当前选项的选中状态
+                        this.classList.add('selected');
+                    };
+                    categorySelect.appendChild(option);
+                });
+            } else {
+                categorySelect.innerHTML = '<div style="color: #999; text-align: center; padding: 10px;">暂无分类</div>';
+            }
+        }
+        
+        // 获取颜色值（支持预定义颜色和自定义十六进制颜色）
+        function getColorValue(color) {
+            // 颜色映射
+            const COLOR_MAP = {
+                red: '#f44336',
+                blue: '#2196F3',
+                green: '#4CAF50',
+                yellow: '#FFEB3B',
+                purple: '#9C27B0',
+                orange: '#FF9800',
+                pink: '#E91E63',
+                cyan: '#00BCD4'
+            };
+            
+            // 如果是预定义颜色，返回对应值
+            if (COLOR_MAP[color]) {
+                return COLOR_MAP[color];
+            }
+            // 否则直接返回（假设是十六进制颜色）
+            return color;
+        }
+        
+        // 搜索地点
+        function searchPlace() {
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) {
+                showStatus('请输入搜索关键词', 'error');
+                return;
+            }
+
+            const url = 'https://restapi.amap.com/v3/place/text?key=45461b14046c9bda310ce713420c84d4&keywords=' + encodeURIComponent(keyword) + '&city=深圳&offset=10&page=1&extensions=all';
+
+            fetch(url)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.status === '1' && data.pois && data.pois.length > 0) {
+                        displaySearchResults(data.pois);
+                    } else {
+                        showStatus('未找到相关地点', 'error');
+                    }
+                })
+                .catch(function(error) {
+                    showStatus('搜索失败：' + error.message, 'error');
+                });
+        }
+
+        // 显示搜索结果
+        function displaySearchResults(places) {
+            const resultsDiv = document.getElementById('searchResults');
+            let html = '';
+
+            places.forEach(function(place, index) {
+                const location = place.location.split(',');
+                const lng = parseFloat(location[0]);
+                const lat = parseFloat(location[1]);
+
+                html += '<div class="place-item" onclick="selectPlace(' + lng + ', ' + lat + ', \'' + place.name + '\', \'' + (place.address || '') + '\')">' +
+                    '<h4>' + (index + 1) + '. ' + place.name + '</h4>' +
+                    '<p>📍 ' + (place.address || '暂无地址') + '</p>' +
+                    '</div>';
+            });
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // 选择地点
+        function selectPlace(lng, lat, name, address) {
+            if (map) {
+                map.setCenter([lng, lat]);
+                map.setZoom(17);
+            }
+
+            document.getElementById('markerName').value = name;
+            document.getElementById('markerLng').value = lng;
+            document.getElementById('markerLat').value = lat;
+
+            // 使用逆地理编码获取详细地址
+            getAddressDetail(lng, lat, address);
+
+            enterPinningMode();
+            showStatus('已定位到：' + name + '，请拖动地图微调位置', 'success');
+        }
+
+        // 获取详细地址信息
+        function getAddressDetail(lng, lat, fallbackAddress) {
+            const url = 'https://restapi.amap.com/v3/geocode/regeo?key=45461b14046c9bda310ce713420c84d4&location=' + lng + ',' + lat + '&extensions=all';
+
+            fetch(url)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.status === '1' && data.regeocode) {
+                        const regeocode = data.regeocode;
+                        let addressDetail = '';
+
+                        // 构建详细地址
+                        if (regeocode.formatted_address) {
+                            addressDetail = regeocode.formatted_address;
+                        }
+
+                        // 添加地址组成部分
+                        const addressComponent = regeocode.addressComponent || {};
+                        const pois = regeocode.pois || [];
+
+                        // 如果有POI信息，添加到描述
+                        if (pois.length > 0) {
+                            addressDetail += '\n\n附近地标：';
+                            pois.slice(0, 3).forEach(function(poi, index) {
+                                addressDetail += '\n' + (index + 1) + '. ' + poi.name;
+                                if (poi.distance) {
+                                    addressDetail += ' (' + poi.distance + '米)';
+                                }
+                            });
+                        }
+
+                        // 添加行政区划信息
+                        if (addressComponent.province || addressComponent.city || addressComponent.district) {
+                            addressDetail += '\n\n行政区划：';
+                            if (addressComponent.province) addressDetail += addressComponent.province + ' ';
+                            if (addressComponent.city) addressDetail += addressComponent.city + ' ';
+                            if (addressComponent.district) addressDetail += addressComponent.district;
+                        }
+
+                        // 添加街道信息
+                        if (addressComponent.township || addressComponent.street) {
+                            addressDetail += '\n街道：';
+                            if (addressComponent.township) addressDetail += addressComponent.township + ' ';
+                            if (addressComponent.street) addressDetail += addressComponent.street;
+                        }
+
+                        // 添加门牌号
+                        if (addressComponent.streetNumber) {
+                            addressDetail += '\n门牌号：' + addressComponent.streetNumber;
+                        }
+
+                        document.getElementById('markerDesc').value = addressDetail;
+                    } else {
+                        // 如果逆地理编码失败，使用传入的地址
+                        document.getElementById('markerDesc').value = fallbackAddress || '暂无详细地址';
+                    }
+                })
+                .catch(function(error) {
+                    // 如果请求失败，使用传入的地址
+                    document.getElementById('markerDesc').value = fallbackAddress || '暂无详细地址';
+                });
+        }
+
+        // 定位我的位置
+        function locateMyPosition() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+
+                        if (map) {
+                            map.setCenter([lng, lat]);
+                            map.setZoom(17);
+                        }
+
+                        document.getElementById('markerLng').value = lng;
+                        document.getElementById('markerLat').value = lat;
+
+                        // 使用逆地理编码获取详细地址
+                        getAddressDetail(lng, lat, '当前位置');
+
+                        enterPinningMode();
+                        showStatus('已定位到您的位置，请拖动地图微调', 'success');
+                    },
+                    function(error) {
+                        showStatus('定位失败：' + error.message, 'error');
+                    }
+                );
+            } else {
+                showStatus('您的浏览器不支持地理定位', 'error');
+            }
+        }
+
+        // 进入定位模式
+        function enterPinningMode() {
+            document.getElementById('pinningMode').style.display = 'block';
+
+            if (map) {
+                map.on('moveend', function() {
+                    const center = map.getCenter();
+                    document.getElementById('markerLng').value = center.lng;
+                    document.getElementById('markerLat').value = center.lat;
+
+                    // 更新地址信息
+                    getAddressDetail(center.lng, center.lat, null);
+                });
+            }
+        }
+        
+        // 添加标注
+        function addMarker() {
+            const name = document.getElementById('markerName').value.trim();
+            const desc = document.getElementById('markerDesc').value.trim();
+            const lat = document.getElementById('markerLat').value;
+            const lng = document.getElementById('markerLng').value;
+            const categorySelect = document.getElementById('categorySelect');
+            const selectedOption = categorySelect.querySelector('.category-option.selected');
+            
+            if (!name) {
+                showStatus('请输入标注名称', 'error');
+                return;
+            }
+
+            if (!selectedOption) {
+                showStatus('请选择分类', 'error');
+                return;
+            }
+
+            if (!lat || !lng) {
+                showStatus('请先搜索或定位位置', 'error');
+                return;
+            }
+
+            const categoryId = selectedOption.dataset.id;
+            
+            // 调用app.js中的addMarker函数
+            if (typeof addMarker === 'function') {
+                addMarker(name, desc, parseFloat(lat), parseFloat(lng), categoryId);
+            } else {
+                showStatus('添加标注功能不可用', 'error');
+            }
+        }
+        
+        // 回车搜索
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchPlace();
+                    }
+                });
+            }
+        });
+        
+        // 显示状态消息
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            if (statusDiv) {
+                statusDiv.textContent = message;
+                statusDiv.className = 'status-message ' + type;
+
+                setTimeout(function() {
+                    statusDiv.className = 'status-message';
+                }, 5000);
+            } else {
+                console.log('Status message div not found');
+                alert(message);
+            }
+        }
+        
+        // 返回主页面
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
