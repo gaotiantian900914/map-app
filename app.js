@@ -1508,6 +1508,18 @@ function formatDistance(meters) {
 }
 
 function focusOnMarker(lng, lat, markerId) {
+    if (!map) {
+        console.error('地图未初始化，无法聚焦标记');
+        return;
+    }
+    
+    // 验证坐标是否有效
+    if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
+        console.error('无效的坐标:', lng, lat);
+        showStatus('无效的坐标位置', 'error');
+        return;
+    }
+    
     map.setCenter([lng, lat]);
     map.setZoom(16);
 
@@ -1527,7 +1539,7 @@ function focusOnMarker(lng, lat, markerId) {
 function updateMarkersList() {
     const listDiv = document.getElementById('markersList');
     if (!listDiv) {
-        console.log('markersList元素不存在，跳过更新');
+        console.log('markersList 元素不存在，跳过更新');
         return;
     }
 
@@ -1538,6 +1550,12 @@ function updateMarkersList() {
 
     let html = '';
     markers.forEach(function(marker) {
+        // 验证标记数据是否有效
+        if (!marker || typeof marker.lat !== 'number' || typeof marker.lng !== 'number' || isNaN(marker.lat) || isNaN(marker.lng)) {
+            console.warn('跳过无效标记:', marker);
+            return;
+        }
+        
         const categoryName = getCategoryName(marker.categoryId);
         const categoryColor = getColorValue(getCategoryColor(marker.categoryId));
         
