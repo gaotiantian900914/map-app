@@ -1883,21 +1883,26 @@ function searchPlace() {
     }
     
     placeSearch.search(keyword, function(status, result) {
-        if (status === 'complete' && result.info === 'OK') {
-            if (result.poiList && result.poiList.pois.length > 0) {
+        console.log('搜索结果:', status, result);
+        
+        if (status === 'complete' && result && result.info === 'OK') {
+            if (result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
                 const poi = result.poiList.pois[0];
                 const location = poi.location;
+                
+                console.log('找到地点:', poi.name, location);
                 
                 // 将地图中心移动到搜索结果
                 map.setCenter([location.lng, location.lat]);
                 map.setZoom(16);
                 
-                showStatus('搜索成功: ' + poi.name, 'success');
+                showStatus('搜索成功：' + poi.name, 'success');
             } else {
                 showStatus('未找到相关地点', 'error');
             }
         } else {
-            showStatus('搜索失败: ' + status, 'error');
+            console.error('搜索失败:', status, result);
+            showStatus('搜索失败，请重试', 'error');
         }
     });
 }
