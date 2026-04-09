@@ -2015,6 +2015,27 @@ function addMarker(name, description, lat, lng, categoryId) {
 // 从表单添加标注（供 add-marker.html 调用）
 window.addMarkerFromForm = addMarker;
 
+// 显示状态消息（通用函数）
+function showStatus(message, type) {
+    // 尝试在 add-marker.html 中使用
+    const statusDiv = document.getElementById('statusMessage');
+    if (statusDiv) {
+        statusDiv.textContent = message;
+        statusDiv.className = 'status-message ' + type;
+        
+        setTimeout(function() {
+            statusDiv.className = 'status-message';
+        }, 5000);
+    } else {
+        // 在 index.html 中使用 alert 或 console
+        console.log('[' + type + '] ' + message);
+        // 如果是错误，使用 alert
+        if (type === 'error') {
+            alert(message);
+        }
+    }
+}
+
 // 搜索地点
 function searchPlace() {
     const input = document.getElementById('placeSearchInput');
