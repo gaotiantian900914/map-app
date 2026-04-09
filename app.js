@@ -1109,10 +1109,10 @@ function displayMarkerOnMap(marker) {
         
         console.log('最终使用的颜色:', color);
         
-        // 根据分类设置不同颜色的标记
+        // 根据分类设置不同颜色的标记（高德地图支持的颜色）
         let markerColor = 'blue'; // 默认蓝色
         if (color === 'orange') {
-            markerColor = 'red'; // 高德地图没有橙色标记，使用红色代替
+            markerColor = 'orange'; // 高德地图有橙色标记
         } else if (color === 'blue') {
             markerColor = 'blue';
         } else if (color === 'green') {
@@ -1124,14 +1124,14 @@ function displayMarkerOnMap(marker) {
         } else if (color === 'red') {
             markerColor = 'red';
         } else if (color === 'pink') {
-            markerColor = 'red';
+            markerColor = 'pink';
         } else if (color === 'cyan') {
-            markerColor = 'blue';
+            markerColor = 'cyan';
         }
         
         // 使用高德地图内置的标记样式
         const iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_' + markerColor.charAt(0) + '.png';
-        console.log('使用的图标URL:', iconUrl);
+        console.log('使用的图标 URL:', iconUrl);
         
         // 为不同分类的标记设置不同的zIndex，确保它们都能显示
         let zIndex = 100; // 默认zIndex
@@ -3063,18 +3063,18 @@ function batchAddIdealChargingStations() {
     console.log('开始批量添加理想充电站...');
     showStatus('正在批量添加理想充电站...', 'info');
     
-    // 示例数据：深圳市各区的理想充电站位置
+    // 示例数据：深圳市各区的理想充电站位置（与小鹏充电站位置错开约 100 米）
     const chargingStations = [
-        { name: '理想充电站 - 福田区', lat: 22.5217, lng: 114.0557, district: '福田区' },
-        { name: '理想充电站 - 南山区', lat: 22.5429, lng: 113.9303, district: '南山区' },
-        { name: '理想充电站 - 罗湖区', lat: 22.5669, lng: 114.1419, district: '罗湖区' },
-        { name: '理想充电站 - 宝安区', lat: 22.5539, lng: 113.8837, district: '宝安区' },
-        { name: '理想充电站 - 龙岗区', lat: 22.7206, lng: 114.2476, district: '龙岗区' },
-        { name: '理想充电站 - 盐田区', lat: 22.5548, lng: 114.2395, district: '盐田区' },
-        { name: '理想充电站 - 龙华区', lat: 22.6573, lng: 114.0297, district: '龙华区' },
-        { name: '理想充电站 - 坪山区', lat: 22.6930, lng: 114.3458, district: '坪山区' },
-        { name: '理想充电站 - 光明区', lat: 22.7537, lng: 113.9353, district: '光明区' },
-        { name: '理想充电站 - 大鹏新区', lat: 22.5940, lng: 114.4677, district: '大鹏新区' }
+        { name: '理想充电站 - 福田区', lat: 22.5217 + 0.001, lng: 114.0557 + 0.001, district: '福田区' },
+        { name: '理想充电站 - 南山区', lat: 22.5429 + 0.001, lng: 113.9303 + 0.001, district: '南山区' },
+        { name: '理想充电站 - 罗湖区', lat: 22.5669 + 0.001, lng: 114.1419 + 0.001, district: '罗湖区' },
+        { name: '理想充电站 - 宝安区', lat: 22.5539 + 0.001, lng: 113.8837 + 0.001, district: '宝安区' },
+        { name: '理想充电站 - 龙岗区', lat: 22.7206 + 0.001, lng: 114.2476 + 0.001, district: '龙岗区' },
+        { name: '理想充电站 - 盐田区', lat: 22.5548 + 0.001, lng: 114.2395 + 0.001, district: '盐田区' },
+        { name: '理想充电站 - 龙华区', lat: 22.6573 + 0.001, lng: 114.0297 + 0.001, district: '龙华区' },
+        { name: '理想充电站 - 坪山区', lat: 22.6930 + 0.001, lng: 114.3458 + 0.001, district: '坪山区' },
+        { name: '理想充电站 - 光明区', lat: 22.7537 + 0.001, lng: 113.9353 + 0.001, district: '光明区' },
+        { name: '理想充电站 - 大鹏新区', lat: 22.5940 + 0.001, lng: 114.4677 + 0.001, district: '大鹏新区' }
     ];
     
     // 找到"理想充电站"分类（优先）
@@ -3141,18 +3141,18 @@ function batchAddXiaopengChargingStations() {
     console.log('开始批量添加小鹏充电站...');
     showStatus('正在批量添加小鹏充电站...', 'info');
     
-    // 示例数据：深圳市各区的鹏充电站位置
+    // 示例数据：深圳市各区的小鹏充电站位置（与理想充电站位置错开约 100 米）
     const chargingStations = [
-        { name: '小鹏充电站 - 福田区', lat: 22.5329, lng: 114.0633, district: '福田区' },
-        { name: '小鹏充电站 - 南山区', lat: 22.5531, lng: 113.9420, district: '南山区' },
-        { name: '小鹏充电站 - 罗湖区', lat: 22.5771, lng: 114.1321, district: '罗湖区' },
-        { name: '小鹏充电站 - 宝安区', lat: 22.5641, lng: 113.8939, district: '宝安区' },
-        { name: '小鹏充电站 - 龙岗区', lat: 22.7308, lng: 114.2578, district: '龙岗区' },
-        { name: '小鹏充电站 - 盐田区', lat: 22.5650, lng: 114.2497, district: '盐田区' },
-        { name: '小鹏充电站 - 龙华区', lat: 22.6675, lng: 114.0399, district: '龙华区' },
-        { name: '小鹏充电站 - 坪山区', lat: 22.7032, lng: 114.3560, district: '坪山区' },
-        { name: '小鹏充电站 - 光明区', lat: 22.7639, lng: 113.9455, district: '光明区' },
-        { name: '小鹏充电站 - 大鹏新区', lat: 22.6042, lng: 114.4779, district: '大鹏新区' }
+        { name: '小鹏充电站 - 福田区', lat: 22.5329 - 0.001, lng: 114.0633 - 0.001, district: '福田区' },
+        { name: '小鹏充电站 - 南山区', lat: 22.5531 - 0.001, lng: 113.9420 - 0.001, district: '南山区' },
+        { name: '小鹏充电站 - 罗湖区', lat: 22.5771 - 0.001, lng: 114.1321 - 0.001, district: '罗湖区' },
+        { name: '小鹏充电站 - 宝安区', lat: 22.5641 - 0.001, lng: 113.8939 - 0.001, district: '宝安区' },
+        { name: '小鹏充电站 - 龙岗区', lat: 22.7308 - 0.001, lng: 114.2578 - 0.001, district: '龙岗区' },
+        { name: '小鹏充电站 - 盐田区', lat: 22.5650 - 0.001, lng: 114.2497 - 0.001, district: '盐田区' },
+        { name: '小鹏充电站 - 龙华区', lat: 22.6675 - 0.001, lng: 114.0399 - 0.001, district: '龙华区' },
+        { name: '小鹏充电站 - 坪山区', lat: 22.7032 - 0.001, lng: 114.3560 - 0.001, district: '坪山区' },
+        { name: '小鹏充电站 - 光明区', lat: 22.7639 - 0.001, lng: 113.9455 - 0.001, district: '光明区' },
+        { name: '小鹏充电站 - 大鹏新区', lat: 22.6042 - 0.001, lng: 114.4779 - 0.001, district: '大鹏新区' }
     ];
     
     // 找到"小鹏充电站"分类（优先）
