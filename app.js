@@ -2230,12 +2230,12 @@ function batchAddIdealChargingStations() {
             if (!existingMarker) {
                 // 添加新标注，为理想充电站添加一个小的偏移量，避免与其他分类的标记重叠
                 const marker = {
-                    id: 'ideal_' + Date.now() + '_' + i, // 唯一ID
+                    id: 'ideal_' + Date.now() + '_' + i, // 唯一 ID
                     name: station.name,
                     categoryId: categoryId,
-                    description: station.address,
-                    lat: station.lat + 0.0001, // 添加小的偏移量
-                    lng: station.lng + 0.0001, // 添加小的偏移量
+                    description: station.address || station.name, // 使用地址作为描述
+                    lat: station.lat + 0.001, // 添加偏移量，避免与小鹏充电站重叠
+                    lng: station.lng + 0.001, // 添加偏移量，避免与小鹏充电站重叠
                     createdAt: new Date().toLocaleString()
                 };
                 
@@ -2243,14 +2243,15 @@ function batchAddIdealChargingStations() {
                 // 立即显示在地图上
                 if (map && typeof AMap !== 'undefined') {
                     try {
-                        console.log('显示理想充电站标记:', marker.name, '分类ID:', marker.categoryId);
+                        console.log('显示理想充电站标记:', marker.name, '分类 ID:', marker.categoryId);
+                        console.log('描述信息:', marker.description);
                         console.log('分类信息:', categories.find(c => c.id === marker.categoryId));
                         displayMarkerOnMap(marker);
                     } catch (e) {
                         console.error('显示标记失败:', e);
                     }
                 }
-                console.log('添加理想充电站:', station.name, 'ID:', marker.id);
+                console.log('添加理想充电站:', station.name, 'ID:', marker.id, '地址:', station.address);
                 addedCount++;
             } else {
                 // 检查是否需要更新
@@ -2262,11 +2263,11 @@ function batchAddIdealChargingStations() {
                 
                 if (needsUpdate) {
                     // 更新现有标注
-                    existingMarker.lat = station.lat;
-                    existingMarker.lng = station.lng;
-                    existingMarker.description = station.address;
+                    existingMarker.lat = station.lat + 0.001;
+                    existingMarker.lng = station.lng + 0.001;
+                    existingMarker.description = station.address || station.name; // 使用地址作为描述
                     existingMarker.categoryId = categoryId;
-                    console.log('更新理想充电站:', station.name);
+                    console.log('更新理想充电站:', station.name, '地址:', station.address);
                     updatedCount++;
                 } else {
                     console.log('理想充电站已存在:', station.name);
