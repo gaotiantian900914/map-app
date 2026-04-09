@@ -77,10 +77,13 @@ const MARKER_ICONS = {
     green: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png',
     yellow: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_y.png',
     purple: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_p.png',
-    orange: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_o.png',
+    orange: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png', // 橙色使用红色图标，通过 CSS 滤镜实现橙色
     pink: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
     cyan: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png'
 };
+
+// 橙色滤镜（将红色转换为橙色）
+const ORANGE_FILTER = 'sepia(1) saturate(3) hue-rotate(-10deg)';
 
 // 初始化地图
 function initializeApp() {
@@ -1109,29 +1112,9 @@ function displayMarkerOnMap(marker) {
         
         console.log('最终使用的颜色:', color);
         
-        // 根据分类设置不同颜色的标记（高德地图支持的颜色）
-        let markerColor = 'blue'; // 默认蓝色
-        if (color === 'orange') {
-            markerColor = 'orange'; // 高德地图有橙色标记
-        } else if (color === 'blue') {
-            markerColor = 'blue';
-        } else if (color === 'green') {
-            markerColor = 'green';
-        } else if (color === 'yellow') {
-            markerColor = 'yellow';
-        } else if (color === 'purple') {
-            markerColor = 'purple';
-        } else if (color === 'red') {
-            markerColor = 'red';
-        } else if (color === 'pink') {
-            markerColor = 'pink';
-        } else if (color === 'cyan') {
-            markerColor = 'cyan';
-        }
-        
-        // 使用高德地图内置的标记样式
-        const iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_' + markerColor.charAt(0) + '.png';
-        console.log('使用的图标 URL:', iconUrl);
+        // 使用 MARKER_ICONS 对象中的图标 URL
+        const iconUrl = MARKER_ICONS[color] || MARKER_ICONS['blue'];
+        console.log('使用的图标 URL:', iconUrl, '颜色:', color);
         
         // 为不同分类的标记设置不同的zIndex，确保它们都能显示
         let zIndex = 100; // 默认zIndex
@@ -1141,7 +1124,7 @@ function displayMarkerOnMap(marker) {
             zIndex = 150; // 小鹏充电站使用中等的zIndex
         }
         
-        const amapMarker = new AMap.Marker({
+        const markerOptions = {
             position: [marker.lng, marker.lat],
             title: marker.name,
             icon: new AMap.Icon({
@@ -1152,17 +1135,27 @@ function displayMarkerOnMap(marker) {
             clickable: true,
             animation: 'AMAP_ANIMATION_DROP',
             zIndex: zIndex
-        });
+        };
+        
+        // 如果是橙色，添加 CSS 滤镜
+        if (color === 'orange') {
+            markerOptions.iconStyle = {
+                filter: ORANGE_FILTER
+            };
+        }
+        
+        const amapMarker = new AMap.Marker(markerOptions);
 
         const markerCategoryName = getCategoryName(marker.categoryId);
         const categoryColor = getColorValue(getCategoryColor(marker.categoryId));
 
         const infoWindow = new AMap.InfoWindow({
-            content: '<div style="min-width: 200px; padding: 10px;">' +
-                '<h3 style="margin: 0 0 10px 0; color: #333;">' + marker.name + '</h3>' +
-                '<span class="marker-category-badge" style="background: ' + categoryColor + '">' + markerCategoryName + '</span>' +
-                '<p style="margin: 5px 0; color: #666;">' + (marker.description || '无描述') + '</p>' +
-                '<p style="margin: 5px 0; font-size: 12px; color: #999;">坐标: ' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</p>' +
+            content: '<div style="min-width: 250px; padding: 12px;">' +
+                '<h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">' + marker.name + '</h3>' +
+                '<span class="marker-category-badge" style="background: ' + categoryColor + '; padding: 3px 8px; border-radius: 3px; color: white; font-size: 12px;">' + markerCategoryName + '</span>' +
+                '<p style="margin: 8px 0; color: #666; font-size: 13px;">' + (marker.description || '无描述') + '</p>' +
+                '<p style="margin: 6px 0; font-size: 12px; color: #666;"><strong>位置:</strong> ' + generateDetailedLocation(marker.lat, marker.lng) + '</p>' +
+                '<p style="margin: 4px 0; font-size: 11px; color: #999;">坐标：' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</p>' +
                 '</div>',
             offset: new AMap.Pixel(0, -30)
         });
@@ -1237,6 +1230,56 @@ function fitMapToMarkers() {
         console.log('地图视图已调整到包含所有标记，有效标记数量:', validMarkers.length);
     } catch (e) {
         console.error('调整地图视图失败:', e);
+    }
+}
+
+// 生成详细位置信息
+function generateDetailedLocation(lat, lng) {
+    // 根据经纬度生成详细位置描述
+    // 这里使用简单的区域判断，可以根据需要扩展
+    
+    // 定义一些主要城市的范围（简化版）
+    const cities = [
+        { name: '北京', latMin: 39.4, latMax: 41.0, lngMin: 115.7, lngMax: 117.4 },
+        { name: '上海', latMin: 30.6, latMax: 31.9, lngMin: 120.8, lngMax: 122.0 },
+        { name: '广州', latMin: 22.4, latMax: 23.9, lngMin: 112.9, lngMax: 114.0 },
+        { name: '深圳', latMin: 22.4, latMax: 22.8, lngMin: 113.7, lngMax: 114.6 },
+        { name: '成都', latMin: 30.2, latMax: 31.0, lngMin: 103.5, lngMax: 104.9 },
+        { name: '杭州', latMin: 29.9, latMax: 30.6, lngMin: 119.8, lngMax: 120.5 },
+        { name: '重庆', latMin: 28.8, latMax: 30.2, lngMin: 105.8, lngMax: 107.2 },
+        { name: '武汉', latMin: 29.9, latMax: 31.0, lngMin: 113.8, lngMax: 115.2 },
+        { name: '西安', latMin: 33.8, latMax: 34.7, lngMin: 108.3, lngMax: 109.2 },
+        { name: '南京', latMin: 31.7, latMax: 32.6, lngMin: 118.4, lngMax: 119.2 }
+    ];
+    
+    // 查找匹配的城市
+    for (let city of cities) {
+        if (lat >= city.latMin && lat <= city.latMax && lng >= city.lngMin && lng <= city.lngMax) {
+            return city.name + '市及周边';
+        }
+    }
+    
+    // 根据经纬度判断大致区域
+    if (lng >= 120 && lng <= 135) {
+        if (lat >= 30 && lat <= 45) {
+            return '华东地区';
+        } else if (lat >= 20 && lat < 30) {
+            return '华南地区';
+        } else {
+            return '东北地区';
+        }
+    } else if (lng >= 105 && lng < 120) {
+        if (lat >= 30 && lat <= 45) {
+            return '华北地区';
+        } else if (lat >= 20 && lat < 30) {
+            return '华中地区';
+        } else {
+            return '西南地区';
+        }
+    } else if (lng >= 75 && lng < 105) {
+        return '西北地区';
+    } else {
+        return '中国境内';
     }
 }
 
