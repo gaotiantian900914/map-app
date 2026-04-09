@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>强制刷新 - 理想充电站对标小鹏</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #FF9800 0%, #FF5722 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 26px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .compare-box {
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 13px;
+        }
+        .compare-box.before {
+            background: #ffebee;
+            border: 2px solid #f44336;
+        }
+        .compare-box.after {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+        .compare-box h3 {
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .compare-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .compare-box li {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .compare-box li:last-child {
+            border-bottom: none;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .log {
+            background: #263238;
+            color: #eceff1;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 25px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #ff9800;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1> 理想充电站格式刷新</h1>
+        <p class="subtitle">对标小鹏充电站格式进行刷新</p>
+        
+        <div class="comparison">
+            <div class="compare-box before">
+                <h3>❌ 修改前（错误）</h3>
+                <ul>
+                    <li>标题：理想充电站 - 宝安区</li>
+                    <li>描述：理想汽车充电站 - 宝安区</li>
+                    <li>位置：理想汽车充电站 - 宝安区</li>
+                </ul>
+            </div>
+            <div class="compare-box after">
+                <h3>✅ 修改后（正确）</h3>
+                <ul>
+                    <li>标题：理想充电站 宝安壹方城</li>
+                    <li>描述：宝安区新安街道新湖路 99 号</li>
+                    <li>位置：宝安区新安街道新湖路 99 号</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="warning">
+            <strong> 重要提示：</strong><br>
+            您的浏览器缓存了旧的充电站数据，必须清理后重新添加才能看到新格式。
+        </div>
+        
+        <button class="btn btn-danger" onclick="cleanAllIdeal()">
+            1. 清理所有理想充电站旧数据
+        </button>
+        
+        <button class="btn btn-success" onclick="reloadIdeal()">
+            2. 重新添加理想充电站（新格式）
+        </button>
+        
+        <div class="divider"></div>
+        
+        <button class="btn btn-primary" onclick="openIndex()">
+            打开主页查看效果
+        </button>
+        
+        <div id="result" class="result"></div>
+        <div id="log" class="log"></div>
+    </div>
+    
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += '[' + timestamp + '] ' + message + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function showResult(message, isSuccess) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = (isSuccess ? '✅ ' : '❌ ') + message;
+            resultDiv.className = 'result ' + (isSuccess ? 'success' : 'error');
+        }
+        
+        function cleanAllIdeal() {
+            log('开始清理理想充电站旧数据...');
+            try {
+                const saved = localStorage.getItem('myMapMarkers');
+                if (saved) {
+                    let markers = JSON.parse(saved);
+                    const originalCount = markers.length;
+                    
+                    markers = markers.filter(m => {
+                        const isIdeal = m.name && m.name.includes('理想充电站');
+                        if (isIdeal) {
+                            log('删除：' + m.name);
+                        }
+                        return !isIdeal;
+                    });
+                    
+                    localStorage.setItem('myMapMarkers', JSON.stringify(markers));
+                    const deleted = originalCount - markers.length;
+                    log('清理完成，删除了 ' + deleted + ' 个理想充电站');
+                    showResult('成功清理 ' + deleted + ' 个理想充电站，请继续下一步', true);
+                } else {
+                    log('没有找到标记数据');
+                    showResult('没有找到标记数据', false);
+                }
+            } catch (error) {
+                log('清理失败：' + error.message);
+                showResult('清理失败：' + error.message, false);
+            }
+        }
+        
+        function reloadIdeal() {
+            log('开始重新添加理想充电站...');
+            try {
+                const newWindow = window.open('add-marker.html', '_blank');
+                if (newWindow) {
+                    log('已打开批量添加页面');
+                    setTimeout(function() {
+                        showResult('请在新页面点击"批量添加理想充电站"按钮', true);
+                        log('提示：在新页面点击"批量添加理想充电站"按钮');
+                    }, 2000);
+                } else {
+                    showResult('无法打开新窗口，请手动打开 add-marker.html', false);
+                }
+            } catch (error) {
+                log('操作失败：' + error.message);
+                showResult('操作失败：' + error.message, false);
+            }
+        }
+        
+        function openIndex() {
+            log('打开主页...');
+            window.open('index.html?_t=' + Date.now(), '_blank');
+            showResult('已打开主页，请点击充电站标记查看效果', true);
+        }
+    </script>
+</body>
+</html>
