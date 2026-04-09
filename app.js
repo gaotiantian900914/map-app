@@ -1387,11 +1387,38 @@ function deleteMarker(markerId, event) {
         // 更新标记列表
         updateMarkersList();
         
-        // 更新统计信息
-        updateMarkerStats();
-        
         showStatus('标注已删除', 'success');
     }
+}
+
+// 清空所有标注
+function clearAllMarkers() {
+    if (!confirm('确定要清空所有标注吗？此操作不可恢复！')) {
+        return;
+    }
+    
+    // 清空标记数组
+    markers = [];
+    
+    // 清除地图上的所有标记
+    currentMarkers.forEach(function(item) {
+        if (item.marker) {
+            item.marker.setMap(null);
+        }
+    });
+    currentMarkers = [];
+    
+    // 保存到 localStorage
+    saveMarkers();
+    
+    // 更新标记列表
+    updateMarkersList();
+    
+    // 更新统计信息
+    updateMarkerStats();
+    
+    showStatus('已清空所有标注', 'success');
+    console.log('已清空所有标注');
 }
 
 // 聚焦到指定标记
