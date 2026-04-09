@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>当前状态检查 - 地图标注工具</title>
+    <meta http-equiv="refresh" content="5">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .content { padding: 30px; }
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ddd;
+        }
+        .status-card.success { border-left-color: #4CAF50; background: #e8f5e9; }
+        .status-card.error { border-left-color: #f44336; background: #ffebee; }
+        .status-card.warning { border-left-color: #ff9800; background: #fff3e0; }
+        .status-card h3 { margin-bottom: 10px; display: flex; align-items: center; }
+        .status-card .icon { font-size: 24px; margin-right: 10px; }
+        .status-list { list-style: none; }
+        .status-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .status-list li:last-child { border-bottom: none; }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge.success { background: #4CAF50; color: white; }
+        .badge.error { background: #f44336; color: white; }
+        .badge.warning { background: #ff9800; color: white; }
+        .badge.info { background: #2196F3; color: white; }
+        .url-box {
+            background: #2d2d2d;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .action-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        .action-btn:hover { transform: translateY(-2px); }
+        .log-area {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 当前网页状态检查</h1>
+            <p>实时检测网页运行状态</p>
+        </div>
+        
+        <div class="content">
+            <!-- 当前 URL -->
+            <div class="status-card">
+                <h3><span class="icon">🌐</span>当前访问地址</h3>
+                <div class="url-box" id="currentUrl"></div>
+                <div style="margin-top: 10px;">
+                    <a href="index.html" class="action-btn">🏠 首页</a>
+                    <a href="test-new-arch.html" class="action-btn">🧪 测试页面</a>
+                    <a href="diagnose.html" class="action-btn">🔧 诊断页面</a>
+                </div>
+            </div>
+            
+            <!-- 脚本加载状态 -->
+            <div class="status-card" id="scriptStatus">
+                <h3><span class="icon">📜</span>脚本加载状态</h3>
+                <ul class="status-list" id="scriptList">
+                    <li>检查中...</li>
+                </ul>
+            </div>
+            
+            <!-- 函数检查 -->
+            <div class="status-card" id="functionStatus">
+                <h3><span class="icon">⚙️</span>关键函数检查</h3>
+                <ul class="status-list" id="functionList">
+                    <li>检查中...</li>
+                </ul>
+            </div>
+            
+            <!-- 运行日志 -->
+            <div class="status-card">
+                <h3><span class="icon">📝</span>运行日志</h3>
+                <div class="log-area" id="logArea"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const logArea = document.getElementById('logArea');
+        
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.textContent = `[${time}] ${msg}`;
+            if (type === 'error') div.style.color = '#ff4444';
+            else if (type === 'success') div.style.color = '#00ff00';
+            logArea.appendChild(div);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        function checkStatus(name, condition) {
+            const status = condition ? 'success' : 'error';
+            const badge = condition ? '✅ 正常' : '❌ 缺失';
+            const badgeClass = condition ? 'success' : 'error';
+            return { name, status, badge, badgeClass };
+        }
+        
+        // 显示当前 URL
+        document.getElementById('currentUrl').textContent = window.location.href;
+        log('页面加载成功', 'success');
+        log('当前 URL: ' + window.location.href);
+        
+        // 检查脚本
+        setTimeout(function() {
+            const scripts = [
+                { name: '云开发 SDK (tcb.js)', check: () => typeof tcb !== 'undefined' },
+                { name: '高德地图 API (AMap)', check: () => typeof AMap !== 'undefined' },
+                { name: '主程序 (app.js)', check: () => typeof initializeApp === 'function' }
+            ];
+            
+            const scriptList = document.getElementById('scriptList');
+            scriptList.innerHTML = '';
+            
+            let allLoaded = true;
+            scripts.forEach(function(script) {
+                const result = checkStatus(script.name, script.check());
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${result.name}</span>
+                    <span class="badge ${result.badgeClass}">${result.badge}</span>
+                `;
+                scriptList.appendChild(li);
+                
+                if (!result.status) {
+                    allLoaded = false;
+                    log('❌ 脚本加载失败：' + result.name, 'error');
+                } else {
+                    log('✅ 脚本加载成功：' + result.name, 'success');
+                }
+            });
+            
+            const scriptStatus = document.getElementById('scriptStatus');
+            if (allLoaded) {
+                scriptStatus.classList.add('success');
+                log('✓ 所有脚本加载成功', 'success');
+            } else {
+                scriptStatus.classList.add('error');
+                log('✗ 部分脚本加载失败', 'error');
+            }
+            
+        }, 1000);
+        
+        // 检查函数
+        setTimeout(function() {
+            const functions = [
+                'initializeApp',
+                'initMap',
+                'loadCategories',
+                'searchPlace',
+                'addMarker',
+                'deleteMarker',
+                'showStatus',
+                'fitMapToMarkers'
+            ];
+            
+            const functionList = document.getElementById('functionList');
+            functionList.innerHTML = '';
+            
+            let allExist = true;
+            functions.forEach(function(fn) {
+                const exists = typeof window[fn] === 'function';
+                const result = checkStatus(fn, exists);
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${result.name}</span>
+                    <span class="badge ${result.badgeClass}">${result.badge}</span>
+                `;
+                functionList.appendChild(li);
+                
+                if (!exists) {
+                    allExist = false;
+                    log('❌ 函数缺失：' + fn, 'error');
+                }
+            });
+            
+            const functionStatus = document.getElementById('functionStatus');
+            if (allExist) {
+                functionStatus.classList.add('success');
+                log('✓ 所有关键函数存在', 'success');
+            } else {
+                functionStatus.classList.add('error');
+                log('✗ 部分关键函数缺失', 'error');
+            }
+            
+        }, 2000);
+        
+        // 自动刷新提示
+        log('页面将每 5 秒自动刷新');
+    </script>
+    
+    <!-- 加载实际应用的脚本 -->
+    <script src="https://imgcache.qq.com/qcloud/tcbjs/1.11.1/tcb.js"></script>
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=45461b14046c9bda310ce713420c84d4"></script>
+    <script src="app.js?v=8"></script>
+</body>
+</html>

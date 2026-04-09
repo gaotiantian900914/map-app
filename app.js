@@ -111,6 +111,41 @@ if (document.readyState === 'complete') {
     window.addEventListener('load', initializeApp);
 }
 
+// 加载分类
+function loadCategories() {
+    console.log('开始加载分类...');
+    
+    // 默认分类
+    const defaultCategories = [
+        { id: 'default', name: '默认', color: 'blue' },
+        { id: 'restaurant', name: '餐厅', color: 'red' },
+        { id: 'hotel', name: '酒店', color: 'green' },
+        { id: 'scenic', name: '景点', color: 'yellow' },
+        { id: 'shopping', name: '购物', color: 'purple' },
+        { id: 'transport', name: '交通', color: 'orange' },
+        { id: 'charging', name: '充电站', color: 'cyan' }
+    ];
+    
+    // 尝试从 localStorage 加载
+    try {
+        const saved = localStorage.getItem('mapCategories');
+        if (saved) {
+            categories = JSON.parse(saved);
+            console.log('从 localStorage 加载分类:', categories.length);
+        } else {
+            categories = defaultCategories;
+            localStorage.setItem('mapCategories', JSON.stringify(categories));
+            console.log('使用默认分类:', categories.length);
+        }
+    } catch (e) {
+        console.error('加载分类失败:', e);
+        categories = defaultCategories;
+    }
+    
+    console.log('分类加载完成');
+    return categories;
+}
+
 // Tab 切换功能
 function switchTab(tab) {
     if (tab === 'add') {
@@ -2842,6 +2877,139 @@ function showStatus(message, type) {
                 toast.parentNode.removeChild(toast);
             }
         }, 3000);
+    }
+}
+
+// 搜索地点
+function searchPlace() {
+    const input = document.getElementById('placeSearchInput');
+    if (!input || !input.value.trim()) {
+        showStatus('请输入搜索关键词', 'error');
+        return;
+    }
+    
+    const keyword = input.value.trim();
+    showStatus('正在搜索：' + keyword, 'info');
+    
+    if (!placeSearch) {
+        showStatus('搜索服务未初始化', 'error');
+        return;
+    }
+    
+    placeSearch.search(keyword, function(status, result) {
+        console.log('搜索结果:', status, result);
+        
+        if (status === 'complete' && result && result.info === 'OK') {
+            if (result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
+                const poi = result.poiList.pois[0];
+                const location = poi.location;
+                
+                console.log('找到地点:', poi.name, location);
+                
+                // 将地图中心移动到搜索结果
+                map.setCenter([location.lng, location.lat]);
+                map.setZoom(16);
+                
+                showStatus('搜索成功：' + poi.name, 'success');
+            } else {
+                showStatus('未找到相关地点', 'error');
+            }
+        } else {
+            console.error('搜索失败:', status, result);
+            showStatus('搜索失败，请重试', 'error');
+        }
+    });
+}
+
+// 添加标记
+function addMarker(name, description, lat, lng, categoryId) {
+    if (!name || !lat || !lng) {
+        showStatus('标注信息不完整', 'error');
+        return false;
+    }
+    
+    const marker = {
+        id: Date.now().toString(),
+        name: name,
+        description: description || '',
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        categoryId: categoryId || 'default',
+        createdAt: new Date().toLocaleString()
+    };
+    
+    markers.push(marker);
+    saveMarkers();
+    
+    // 显示在地图上
+    if (map) {
+        displayMarkerOnMap(marker);
+    }
+    
+    // 更新列表
+    updateMarkersList();
+    updateMarkerStats();
+    
+    showStatus('标注添加成功', 'success');
+    return true;
+}
+
+// 删除标记
+function deleteMarker(markerId, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    if (!confirm('确定要删除这个标注吗？')) {
+        return;
+    }
+    
+    const markerIndex = markers.findIndex(m => m.id === markerId);
+    if (markerIndex > -1) {
+        markers.splice(markerIndex, 1);
+        saveMarkers();
+        reloadMarkersOnMap();
+        updateMarkersList();
+        updateMarkerStats();
+        showStatus('标注已删除', 'success');
+    }
+}
+
+// 调整地图视图以适应所有标记
+function fitMapToMarkers() {
+    if (!map || markers.length === 0) {
+        console.log('地图未初始化或没有标记，跳过调整视图');
+        return;
+    }
+    
+    try {
+        // 过滤出有效的标记
+        const validMarkers = markers.filter(function(marker) {
+            return marker && 
+                   typeof marker.lat === 'number' && 
+                   typeof marker.lng === 'number' &&
+                   !isNaN(marker.lat) && 
+                   !isNaN(marker.lng);
+        });
+        
+        if (validMarkers.length === 0) {
+            console.log('没有有效的标记，跳过调整视图');
+            return;
+        }
+        
+        // 创建边界对象
+        const bounds = new AMap.Bounds();
+        
+        // 添加所有有效标记的位置到边界
+        validMarkers.forEach(function(marker) {
+            bounds.extend([marker.lng, marker.lat]);
+        });
+        
+        // 调整地图视图
+        map.setBounds(bounds);
+        console.log('地图视图已调整到包含所有标记，有效标记数量:', validMarkers.length);
+    } catch (e) {
+        console.error('调整地图视图失败:', e);
     }
 }
 
