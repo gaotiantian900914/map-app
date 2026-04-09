@@ -1193,7 +1193,6 @@ function displayMarkerOnMap(marker) {
                 highlightMarkerInList(marker.id);
             });
         });
-        });
 
         amapMarker.setMap(map);
 
