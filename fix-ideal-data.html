@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修复理想充电站数据</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; text-align: center; }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-primary { background: #2196F3; color: white; }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: #e8f5e9;
+            display: none;
+        }
+        .log {
+            background: #263238;
+            color: #ECEFF1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 修复理想充电站数据</h1>
+        
+        <button class="btn btn-danger" onclick="step1_clean()">步骤1: 清理所有理想充电站</button>
+        <button class="btn btn-success" onclick="step2_add()">步骤2: 添加新格式理想充电站</button>
+        <button class="btn btn-primary" onclick="step3_verify()">步骤3: 验证并打开主页</button>
+        
+        <div id="result" class="result"></div>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        // 理想充电站数据（完全对标小鹏格式）
+        const idealStations = [
+            // 宝安区
+            { name: '理想充电站 宝安壹方城', lat: 22.552141, lng: 113.887684, address: '宝安区新安街道新湖路99号' },
+            { name: '理想充电站 宝安海雅缤纷城', lat: 22.558146, lng: 113.874531, address: '宝安区新安街道建安一路99号' },
+            { name: '理想充电站 宝安欢乐港湾', lat: 22.559677, lng: 113.878939, address: '宝安区宝兴路欢乐港湾' },
+            { name: '理想充电站 宝安大仟里', lat: 22.601817, lng: 113.869338, address: '宝安区西乡街道海城路3号' },
+            { name: '理想充电站 宝安中粮大悦城', lat: 22.540712, lng: 113.839603, address: '宝安区新安街道创业二路与新安一路交汇处' },
+            { name: '理想充电站 宝安福永益田假日广场', lat: 22.646789, lng: 113.809123, address: '宝安区福永街道益田假日广场' },
+            { name: '理想充电站 宝安沙井京基百纳', lat: 22.688941, lng: 113.814209, address: '宝安区沙井街道京基百纳广场' },
+            
+            // 南山区
+            { name: '理想充电站 南山万象前海', lat: 22.524356, lng: 113.896789, address: '南山区桂湾四路169号' },
+            { name: '理想充电站 南山科技园', lat: 22.538452, lng: 113.936781, address: '南山区科技园' },
+            { name: '理想充电站 南山保利广场', lat: 22.526784, lng: 113.941235, address: '南山区粤海街道文心五路30-1号' },
+            { name: '理想充电站 南山海岸城', lat: 22.524356, lng: 113.938765, address: '南山区海岸城购物中心' },
+            { name: '理想充电站 南山深圳湾万象城', lat: 22.530123, lng: 113.948765, address: '南山区科苑南路2888号' },
+            { name: '理想充电站 南山蛇口海上世界', lat: 22.533456, lng: 113.931234, address: '南山区蛇口海上世界' },
+            { name: '理想充电站 南山麒麟花园', lat: 22.543900, lng: 113.931300, address: '南山区南头街道麒麟花园' },
+            
+            // 福田区
+            { name: '理想充电站 福田中心区', lat: 22.542999, lng: 114.059563, address: '福田区福华路3号' },
+            { name: '理想充电站 福田COCO Park', lat: 22.541497, lng: 114.053303, address: '福田区福华三路269号' },
+            { name: '理想充电站 福田华强北', lat: 22.533333, lng: 114.058333, address: '福田区华强北路' },
+            
+            // 罗湖区
+            { name: '理想充电站 罗湖万象城', lat: 22.540341, lng: 114.101526, address: '罗湖区宝安南路1881号' },
+            { name: '理想充电站 罗湖东门', lat: 22.547222, lng: 114.117778, address: '罗湖区东门步行街' },
+            
+            // 龙岗区
+            { name: '理想充电站 龙岗万科广场', lat: 22.656028, lng: 114.278333, address: '龙岗区龙翔大道7188号' },
+            { name: '理想充电站 龙岗大运中心', lat: 22.674444, lng: 114.338889, address: '龙岗区大运路' },
+            
+            // 龙华区
+            { name: '理想充电站 龙华壹方天地', lat: 22.583333, lng: 114.016667, address: '龙华区龙华街道景龙社区' },
+            { name: '理想充电站 龙华观澜湖', lat: 22.641667, lng: 114.016667, address: '龙华区观澜街道' },
+            
+            // 盐田区
+            { name: '理想充电站 盐田壹海城', lat: 22.544444, lng: 114.222222, address: '盐田区海山街道壹海城' },
+            
+            // 坪山区
+            { name: '理想充电站 坪山益田假日世界', lat: 22.690278, lng: 114.323611, address: '坪山区坪山街道益田假日世界' },
+            
+            // 光明区
+            { name: '理想充电站 光明万达广场', lat: 22.677778, lng: 113.922222, address: '光明区光明街道万达广场' },
+            
+            // 大鹏新区
+            { name: '理想充电站 大鹏佳兆业广场', lat: 22.533333, lng: 114.366667, address: '大鹏新区大鹏街道佳兆业广场' }
+        ];
+
+        function log(msg) {
+            document.getElementById('log').innerHTML += msg + '<br>';
+        }
+
+        function showResult(msg) {
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').innerHTML = msg;
+        }
+
+        function step1_clean() {
+            log('=== 步骤1: 清理理想充电站 ===');
+            try {
+                let markers = JSON.parse(localStorage.getItem('myMapMarkers') || '[]');
+                let beforeCount = markers.length;
+                
+                markers = markers.filter(m => !m.name.includes('理想充电站'));
+                
+                localStorage.setItem('myMapMarkers', JSON.stringify(markers));
+                let deleted = beforeCount - markers.length;
+                
+                log('清理完成，删除了 ' + deleted + ' 个理想充电站');
+                showResult('✅ 步骤1完成：已清理 ' + deleted + ' 个理想充电站');
+            } catch(e) {
+                log('错误: ' + e.message);
+            }
+        }
+
+        function step2_add() {
+            log('=== 步骤2: 添加新格式理想充电站 ===');
+            try {
+                let markers = JSON.parse(localStorage.getItem('myMapMarkers') || '[]');
+                let categories = JSON.parse(localStorage.getItem('myMapCategories') || '[]');
+                
+                // 确保理想充电站分类存在
+                let idealCat = categories.find(c => c.name === '理想充电站');
+                if (!idealCat) {
+                    idealCat = { id: 'ideal_' + Date.now(), name: '理想充电站', color: 'orange' };
+                    categories.push(idealCat);
+                    localStorage.setItem('myMapCategories', JSON.stringify(categories));
+                    log('创建理想充电站分类');
+                }
+                
+                // 添加充电站
+                let added = 0;
+                idealStations.forEach((station, i) => {
+                    // 检查是否已存在
+                    let exists = markers.find(m => m.name === station.name);
+                    if (!exists) {
+                        markers.push({
+                            id: 'ideal_' + Date.now() + '_' + i,
+                            name: station.name,
+                            categoryId: idealCat.id,
+                            description: station.address,  // 使用地址作为描述
+                            lat: station.lat + 0.001,
+                            lng: station.lng + 0.001,
+                            createdAt: new Date().toLocaleString()
+                        });
+                        added++;
+                        log('添加: ' + station.name + ' -> ' + station.address);
+                    }
+                });
+                
+                localStorage.setItem('myMapMarkers', JSON.stringify(markers));
+                log('添加完成，共添加 ' + added + ' 个理想充电站');
+                showResult('✅ 步骤2完成：已添加 ' + added + ' 个理想充电站（新格式）');
+            } catch(e) {
+                log('错误: ' + e.message);
+            }
+        }
+
+        function step3_verify() {
+            log('=== 步骤3: 验证数据 ===');
+            try {
+                let markers = JSON.parse(localStorage.getItem('myMapMarkers') || '[]');
+                let idealMarkers = markers.filter(m => m.name.includes('理想充电站'));
+                
+                log('找到 ' + idealMarkers.length + ' 个理想充电站');
+                
+                // 显示前3个示例
+                idealMarkers.slice(0, 3).forEach(m => {
+                    log('示例: ' + m.name + ' | 描述: ' + m.description);
+                });
+                
+                showResult('✅ 步骤3完成：数据已修复，正在打开主页...');
+                
+                setTimeout(() => {
+                    window.open('index.html?_t=' + Date.now(), '_blank');
+                }, 1500);
+            } catch(e) {
+                log('错误: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>
