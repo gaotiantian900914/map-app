@@ -1149,37 +1149,13 @@ function displayMarkerOnMap(marker) {
         const markerCategoryName = getCategoryName(marker.categoryId);
         const categoryColor = getColorValue(getCategoryColor(marker.categoryId));
 
-        // 异步获取详细地址
-        let addressText = '加载中...';
-        generateDetailedLocation(marker.lat, marker.lng).then(function(address) {
-            addressText = address;
-            // 更新信息窗口内容
-            const newContent = '<div style="min-width: 250px; padding: 12px;">' +
-                '<h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">' + marker.name + '</h3>' +
-                '<span class="marker-category-badge" style="background: ' + categoryColor + '; padding: 3px 8px; border-radius: 3px; color: white; font-size: 12px;">' + markerCategoryName + '</span>' +
-                '<p style="margin: 8px 0; color: #666; font-size: 13px;">' + (marker.description || '无描述') + '</p>' +
-                '<p style="margin: 6px 0; font-size: 12px; color: #666;"><strong>位置:</strong> ' + address + '</p>' +
-                '<p style="margin: 4px 0; font-size: 11px; color: #999;">坐标：' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</p>' +
-                '</div>';
-            
-            // 如果信息窗口正在显示，更新其内容
-            if (activeInfoWindow && activeInfoWindow.isOpen()) {
-                // 找到对应的信息窗口并更新
-                const markerItem = currentMarkers.find(item => item.id === marker.id);
-                if (markerItem && markerItem.infoWindow.isOpen()) {
-                    markerItem.infoWindow.setContent(newContent);
-                }
-            }
-        }).catch(function(error) {
-            addressText = '坐标：' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6);
-        });
-
+        // 创建信息窗口（初始不获取地址）
         const infoWindow = new AMap.InfoWindow({
             content: '<div style="min-width: 250px; padding: 12px;">' +
                 '<h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">' + marker.name + '</h3>' +
                 '<span class="marker-category-badge" style="background: ' + categoryColor + '; padding: 3px 8px; border-radius: 3px; color: white; font-size: 12px;">' + markerCategoryName + '</span>' +
                 '<p style="margin: 8px 0; color: #666; font-size: 13px;">' + (marker.description || '无描述') + '</p>' +
-                '<p style="margin: 6px 0; font-size: 12px; color: #666;"><strong>位置:</strong> ' + addressText + '</p>' +
+                '<p style="margin: 6px 0; font-size: 12px; color: #666;"><strong>位置:</strong> <span id="location-' + marker.id + '">加载中...</span></p>' +
                 '<p style="margin: 4px 0; font-size: 11px; color: #999;">坐标：' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</p>' +
                 '</div>',
             offset: new AMap.Pixel(0, -30)
@@ -1189,11 +1165,34 @@ function displayMarkerOnMap(marker) {
             if (activeInfoWindow) {
                 activeInfoWindow.close();
             }
-            const infoWindowPosition = [marker.lng, marker.lat];
-            console.log('信息窗口位置:', infoWindowPosition);
-            infoWindow.open(map, infoWindowPosition);
-            activeInfoWindow = infoWindow;
-            highlightMarkerInList(marker.id);
+            
+            // 打开信息窗口前先获取地址
+            generateDetailedLocation(marker.lat, marker.lng).then(function(address) {
+                // 更新信息窗口内容
+                const content = '<div style="min-width: 250px; padding: 12px;">' +
+                    '<h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">' + marker.name + '</h3>' +
+                    '<span class="marker-category-badge" style="background: ' + categoryColor + '; padding: 3px 8px; border-radius: 3px; color: white; font-size: 12px;">' + markerCategoryName + '</span>' +
+                    '<p style="margin: 8px 0; color: #666; font-size: 13px;">' + (marker.description || '无描述') + '</p>' +
+                    '<p style="margin: 6px 0; font-size: 12px; color: #666;"><strong>位置:</strong> ' + address + '</p>' +
+                    '<p style="margin: 4px 0; font-size: 11px; color: #999;">坐标：' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</p>' +
+                    '</div>';
+                
+                infoWindow.setContent(content);
+                
+                const infoWindowPosition = [marker.lng, marker.lat];
+                console.log('信息窗口位置:', infoWindowPosition);
+                infoWindow.open(map, infoWindowPosition);
+                activeInfoWindow = infoWindow;
+                highlightMarkerInList(marker.id);
+            }).catch(function(error) {
+                console.error('获取地址失败:', error);
+                // 即使失败也打开信息窗口
+                const infoWindowPosition = [marker.lng, marker.lat];
+                infoWindow.open(map, infoWindowPosition);
+                activeInfoWindow = infoWindow;
+                highlightMarkerInList(marker.id);
+            });
+        });
         });
 
         amapMarker.setMap(map);
@@ -1264,8 +1263,11 @@ async function generateDetailedLocation(lat, lng) {
         // 调用高德地图逆地理编码 API
         const url = 'https://restapi.amap.com/v3/geocode/regeo?key=' + AMAP_KEY + '&location=' + lng + ',' + lat + '&extensions=all';
         
+        console.log('正在调用逆地理编码 API:', url);
         const response = await fetch(url);
         const data = await response.json();
+        
+        console.log('逆地理编码 API 返回:', data);
         
         if (data.status === '1' && data.regeocode) {
             const regeocode = data.regeocode;
@@ -1274,6 +1276,18 @@ async function generateDetailedLocation(lat, lng) {
             // 优先使用格式化地址
             if (regeocode.formatted_address) {
                 address = regeocode.formatted_address;
+                console.log('获取到格式化地址:', address);
+            } else {
+                // 如果没有格式化地址，构建地址
+                const addressComponent = regeocode.addressComponent || {};
+                address = '';
+                if (addressComponent.province) address += addressComponent.province;
+                if (addressComponent.city) address += addressComponent.city;
+                if (addressComponent.district) address += addressComponent.district;
+                if (addressComponent.township) address += addressComponent.township;
+                if (addressComponent.street) address += addressComponent.street;
+                if (addressComponent.streetNumber) address += addressComponent.streetNumber;
+                console.log('构建的地址:', address);
             }
             
             // 添加附近 POI 信息（如果有）
@@ -1286,11 +1300,17 @@ async function generateDetailedLocation(lat, lng) {
                 }
             }
             
+            if (!address || address.length < 5) {
+                console.warn('地址太短，可能无效:', address);
+                return '纬度：' + lat.toFixed(6) + ', 经度：' + lng.toFixed(6);
+            }
+            
             return address;
+        } else {
+            console.error('逆地理编码 API 返回错误:', data);
+            // 如果 API 调用失败，返回坐标
+            return '纬度：' + lat.toFixed(6) + ', 经度：' + lng.toFixed(6);
         }
-        
-        // 如果 API 调用失败，返回坐标
-        return '纬度：' + lat.toFixed(6) + ', 经度：' + lng.toFixed(6);
     } catch (error) {
         console.error('逆地理编码失败:', error);
         return '纬度：' + lat.toFixed(6) + ', 经度：' + lng.toFixed(6);
@@ -2228,14 +2248,14 @@ function batchAddIdealChargingStations() {
                 }
             }
             if (!existingMarker) {
-                // 添加新标注，为理想充电站添加一个小的偏移量，避免与其他分类的标记重叠
+                // 添加新标注，理想充电站坐标-0.001，与小鹏充电站错开
                 const marker = {
                     id: 'ideal_' + Date.now() + '_' + i, // 唯一 ID
                     name: station.name,
                     categoryId: categoryId,
-                    description: station.address || station.name, // 使用地址作为描述
-                    lat: station.lat + 0.001, // 添加偏移量，避免与小鹏充电站重叠
-                    lng: station.lng + 0.001, // 添加偏移量，避免与小鹏充电站重叠
+                    description: station.address || '', // 使用地址作为描述（对标小鹏）
+                    lat: station.lat - 0.001, // 理想充电站坐标-0.001，与小鹏充电站错开
+                    lng: station.lng - 0.001, // 理想充电站坐标-0.001，与小鹏充电站错开
                     createdAt: new Date().toLocaleString()
                 };
                 
@@ -2245,6 +2265,7 @@ function batchAddIdealChargingStations() {
                     try {
                         console.log('显示理想充电站标记:', marker.name, '分类 ID:', marker.categoryId);
                         console.log('描述信息:', marker.description);
+                        console.log('坐标:', marker.lat, marker.lng);
                         console.log('分类信息:', categories.find(c => c.id === marker.categoryId));
                         displayMarkerOnMap(marker);
                     } catch (e) {
@@ -2256,18 +2277,18 @@ function batchAddIdealChargingStations() {
             } else {
                 // 检查是否需要更新
                 const needsUpdate = 
-                    existingMarker.lat !== station.lat ||
-                    existingMarker.lng !== station.lng ||
+                    existingMarker.lat !== (station.lat - 0.001) ||
+                    existingMarker.lng !== (station.lng - 0.001) ||
                     existingMarker.description !== station.address ||
                     existingMarker.categoryId !== categoryId;
                 
                 if (needsUpdate) {
                     // 更新现有标注
-                    existingMarker.lat = station.lat + 0.001;
-                    existingMarker.lng = station.lng + 0.001;
-                    existingMarker.description = station.address || station.name; // 使用地址作为描述
+                    existingMarker.lat = station.lat - 0.001;
+                    existingMarker.lng = station.lng - 0.001;
+                    existingMarker.description = station.address || ''; // 使用地址作为描述（对标小鹏）
                     existingMarker.categoryId = categoryId;
-                    console.log('更新理想充电站:', station.name, '地址:', station.address);
+                    console.log('更新理想充电站:', station.name, '地址:', station.address, '坐标:', existingMarker.lat, existingMarker.lng);
                     updatedCount++;
                 } else {
                     console.log('理想充电站已存在:', station.name);
