@@ -1166,32 +1166,50 @@ function displayMarkerOnMap(marker) {
                 activeInfoWindow.close();
             }
             
-            // 打开信息窗口前先获取地址
-            generateDetailedLocation(marker.lat, marker.lng).then(function(address) {
-                // 更新信息窗口内容
+            // 优先使用 marker.description 作为位置信息
+            let locationText = marker.description || '加载中...';
+            
+            // 如果没有 description 或 description 为空，则调用逆地理编码 API
+            if (!marker.description || marker.description.trim() === '') {
+                generateDetailedLocation(marker.lat, marker.lng).then(function(address) {
+                    locationText = address;
+                    // 更新信息窗口内容
+                    const content = '<div style="min-width: 250px; padding: 12px;">' +
+                        '<h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">' + marker.name + '</h3>' +
+                        '<span class="marker-category-badge" style="background: ' + categoryColor + '; padding: 3px 8px; border-radius: 3px; color: white; font-size: 12px;">' + markerCategoryName + '</span>' +
+                        '<p style="margin: 8px 0; color: #666; font-size: 13px;">' + (marker.description || '无描述') + '</p>' +
+                        '<p style="margin: 6px 0; font-size: 12px; color: #666;"><strong>位置:</strong> ' + locationText + '</p>' +
+                        '<p style="margin: 4px 0; font-size: 11px; color: #999;">坐标：' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</p>' +
+                        '</div>';
+                    
+                    infoWindow.setContent(content);
+                    infoWindow.open(map, [marker.lng, marker.lat]);
+                    activeInfoWindow = infoWindow;
+                    highlightMarkerInList(marker.id);
+                }).catch(function(error) {
+                    console.error('获取地址失败:', error);
+                    locationText = '坐标：' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6);
+                    openInfoWindow();
+                });
+            } else {
+                // 有 description，直接打开信息窗口
+                openInfoWindow();
+            }
+            
+            function openInfoWindow() {
                 const content = '<div style="min-width: 250px; padding: 12px;">' +
                     '<h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">' + marker.name + '</h3>' +
                     '<span class="marker-category-badge" style="background: ' + categoryColor + '; padding: 3px 8px; border-radius: 3px; color: white; font-size: 12px;">' + markerCategoryName + '</span>' +
                     '<p style="margin: 8px 0; color: #666; font-size: 13px;">' + (marker.description || '无描述') + '</p>' +
-                    '<p style="margin: 6px 0; font-size: 12px; color: #666;"><strong>位置:</strong> ' + address + '</p>' +
+                    '<p style="margin: 6px 0; font-size: 12px; color: #666;"><strong>位置:</strong> ' + locationText + '</p>' +
                     '<p style="margin: 4px 0; font-size: 11px; color: #999;">坐标：' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</p>' +
                     '</div>';
                 
                 infoWindow.setContent(content);
-                
-                const infoWindowPosition = [marker.lng, marker.lat];
-                console.log('信息窗口位置:', infoWindowPosition);
-                infoWindow.open(map, infoWindowPosition);
+                infoWindow.open(map, [marker.lng, marker.lat]);
                 activeInfoWindow = infoWindow;
                 highlightMarkerInList(marker.id);
-            }).catch(function(error) {
-                console.error('获取地址失败:', error);
-                // 即使失败也打开信息窗口
-                const infoWindowPosition = [marker.lng, marker.lat];
-                infoWindow.open(map, infoWindowPosition);
-                activeInfoWindow = infoWindow;
-                highlightMarkerInList(marker.id);
-            });
+            }
         });
 
         amapMarker.setMap(map);
