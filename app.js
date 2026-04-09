@@ -3041,9 +3041,20 @@ function batchAddIdealChargingStations() {
         { name: '理想充电站 - 大鹏新区', lat: 22.5940, lng: 114.4677, district: '大鹏新区' }
     ];
     
-    // 找到"充电站"分类
+    // 找到"理想充电站"分类（优先）或"充电站"分类
+    let categoryId = 'default';
+    const idealCategory = categories.find(c => c.name === '理想充电站');
     const chargingCategory = categories.find(c => c.name === '充电站' || c.name === '充电桩');
-    const categoryId = chargingCategory ? chargingCategory.id : 'default';
+    
+    if (idealCategory) {
+        categoryId = idealCategory.id;
+        console.log('使用理想充电站分类:', idealCategory.name, '颜色:', idealCategory.color);
+    } else if (chargingCategory) {
+        categoryId = chargingCategory.id;
+        console.log('使用充电站分类:', chargingCategory.name);
+    } else {
+        console.warn('未找到合适的分类，使用默认分类');
+    }
     
     let addedCount = 0;
     
@@ -3072,7 +3083,7 @@ function batchAddIdealChargingStations() {
                 saveMarkers();
                 updateMarkersList();
                 updateMarkerStats();
-                showStatus('成功添加 ' + addedCount + ' 个理想充电站', 'success');
+                showStatus('成功添加 ' + addedCount + ' 个理想充电站（橘黄色）', 'success');
                 
                 // 调整地图视图
                 setTimeout(function() {
@@ -3102,9 +3113,20 @@ function batchAddXiaopengChargingStations() {
         { name: '小鹏充电站 - 大鹏新区', lat: 22.6042, lng: 114.4779, district: '大鹏新区' }
     ];
     
-    // 找到"充电站"分类
+    // 找到"小鹏充电站"分类（优先）或"充电站"分类
+    let categoryId = 'default';
+    const xpengCategory = categories.find(c => c.name === '小鹏充电站');
     const chargingCategory = categories.find(c => c.name === '充电站' || c.name === '充电桩');
-    const categoryId = chargingCategory ? chargingCategory.id : 'default';
+    
+    if (xpengCategory) {
+        categoryId = xpengCategory.id;
+        console.log('使用小鹏充电站分类:', xpengCategory.name, '颜色:', xpengCategory.color);
+    } else if (chargingCategory) {
+        categoryId = chargingCategory.id;
+        console.log('使用充电站分类:', chargingCategory.name);
+    } else {
+        console.warn('未找到合适的分类，使用默认分类');
+    }
     
     let addedCount = 0;
     
@@ -3133,7 +3155,7 @@ function batchAddXiaopengChargingStations() {
                 saveMarkers();
                 updateMarkersList();
                 updateMarkerStats();
-                showStatus('成功添加 ' + addedCount + ' 个小鹏充电站', 'success');
+                showStatus('成功添加 ' + addedCount + ' 个小鹏充电站（蓝色）', 'success');
                 
                 // 调整地图视图
                 setTimeout(function() {
