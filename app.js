@@ -2293,14 +2293,20 @@ function batchAddIdealChargingStations() {
                 }
             }
             if (!existingMarker) {
-                // 添加新标注，理想充电站坐标-0.001，与小鹏充电站错开
+                // 验证坐标数据
+                if (typeof station.lat !== 'number' || typeof station.lng !== 'number' || isNaN(station.lat) || isNaN(station.lng)) {
+                    console.error('理想充电站坐标无效:', station.name, station.lat, station.lng);
+                    continue; // 跳过这个站点
+                }
+                
+                // 添加新标注，理想充电站坐标 +0.001，与小鹏充电站错开
                 const marker = {
                     id: 'ideal_' + Date.now() + '_' + i, // 唯一 ID
                     name: station.name,
                     categoryId: categoryId,
                     description: station.address || '', // 使用地址作为描述（对标小鹏）
-                    lat: station.lat - 0.001, // 理想充电站坐标-0.001，与小鹏充电站错开
-                    lng: station.lng - 0.001, // 理想充电站坐标-0.001，与小鹏充电站错开
+                    lat: station.lat + 0.001, // 理想充电站坐标 +0.001，与小鹏充电站错开
+                    lng: station.lng + 0.001, // 理想充电站坐标 +0.001，与小鹏充电站错开
                     createdAt: new Date().toLocaleString()
                 };
                 
@@ -2322,15 +2328,21 @@ function batchAddIdealChargingStations() {
             } else {
                 // 检查是否需要更新
                 const needsUpdate = 
-                    existingMarker.lat !== (station.lat - 0.001) ||
-                    existingMarker.lng !== (station.lng - 0.001) ||
+                    existingMarker.lat !== (station.lat + 0.001) ||
+                    existingMarker.lng !== (station.lng + 0.001) ||
                     existingMarker.description !== station.address ||
                     existingMarker.categoryId !== categoryId;
                 
                 if (needsUpdate) {
+                    // 验证坐标数据
+                    if (typeof station.lat !== 'number' || typeof station.lng !== 'number' || isNaN(station.lat) || isNaN(station.lng)) {
+                        console.error('理想充电站坐标无效，跳过更新:', station.name, station.lat, station.lng);
+                        continue;
+                    }
+                    
                     // 更新现有标注
-                    existingMarker.lat = station.lat - 0.001;
-                    existingMarker.lng = station.lng - 0.001;
+                    existingMarker.lat = station.lat + 0.001;
+                    existingMarker.lng = station.lng + 0.001;
                     existingMarker.description = station.address || ''; // 使用地址作为描述（对标小鹏）
                     existingMarker.categoryId = categoryId;
                     console.log('更新理想充电站:', station.name, '地址:', station.address, '坐标:', existingMarker.lat, existingMarker.lng);
