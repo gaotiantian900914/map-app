@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>问题诊断工具 - 理想充电站数据检查</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .section h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            padding-left: 12px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+        }
+        .info-box {
+            background: #f5f5f5;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .info-box strong {
+            color: #333;
+        }
+        .data-item {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .data-item .field {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .data-item .value {
+            color: #333;
+            margin-left: 10px;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        pre {
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .log-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 问题诊断工具</h1>
+            <p>检查理想充电站数据格式和 localStorage 存储内容</p>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <h2>📋 诊断步骤</h2>
+                <div class="info-box">
+                    <strong>请按顺序执行以下操作：</strong>
+                    <ol style="margin: 10px 0 0 20px; line-height: 1.8;">
+                        <li>点击"清除所有缓存和数据"按钮</li>
+                        <li>打开 add-marker.html 页面</li>
+                        <li>点击"批量添加理想充电站"按钮</li>
+                        <li>返回此页面，点击"检查 localStorage 数据"</li>
+                        <li>查看下方的数据报告，找出问题所在</li>
+                    </ol>
+                </div>
+                <div>
+                    <button class="btn btn-danger" onclick="clearAllData()">清除所有缓存和数据</button>
+                    <button class="btn" onclick="openAddMarker()">打开 add-marker.html</button>
+                    <button class="btn btn-success" onclick="checkLocalStorageData()">检查 localStorage 数据</button>
+                </div>
+            </div>
+            
+            <div class="section" id="resultSection" style="display: none;">
+                <h2>📊 检查结果</h2>
+                <div id="resultContent"></div>
+            </div>
+            
+            <div class="section">
+                <h2>📝 详细数据</h2>
+                <pre id="dataLog">点击"检查 localStorage 数据"按钮查看详细数据...</pre>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 清除所有数据
+        function clearAllData() {
+            if (!confirm('确定要清除所有缓存和 localStorage 数据吗？\n\n这将删除所有标记和分类数据！')) {
+                return;
+            }
+            
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            alert('✓ 清除完成！\n\n现在请打开 add-marker.html 并重新添加理想充电站');
+        }
+        
+        // 打开 add-marker.html
+        function openAddMarker() {
+            window.open('add-marker.html', '_blank');
+        }
+        
+        // 检查 localStorage 数据
+        function checkLocalStorageData() {
+            const resultSection = document.getElementById('resultSection');
+            const resultContent = document.getElementById('resultContent');
+            const dataLog = document.getElementById('dataLog');
+            
+            resultSection.style.display = 'block';
+            
+            let html = '';
+            let logText = '=== 检查开始 ===\n\n';
+            
+            // 检查 markers
+            const markersData = localStorage.getItem('mapMarkers');
+            logText += '1. localStorage 中的 mapMarkers:\n';
+            logText += '   存在：' + (markersData ? '是' : '否') + '\n';
+            
+            if (markersData) {
+                try {
+                    const markers = JSON.parse(markersData);
+                    logText += '   总数：' + markers.length + '\n\n';
+                    
+                    // 查找理想充电站
+                    const idealMarkers = markers.filter(m => m.name && m.name.includes('理想'));
+                    logText += '2. 理想充电站标记:\n';
+                    logText += '   数量：' + idealMarkers.length + '\n\n';
+                    
+                    if (idealMarkers.length > 0) {
+                        html += '<div class="info-box"><strong>发现 ' + idealMarkers.length + ' 个理想充电站标记</strong></div>';
+                        
+                        // 检查前 5 个
+                        idealMarkers.slice(0, 5).forEach((marker, index) => {
+                            logText += '--- 理想充电站 #' + (index + 1) + ' ---\n';
+                            logText += '   name: ' + marker.name + '\n';
+                            logText += '   description: ' + marker.description + '\n';
+                            logText += '   categoryId: ' + marker.categoryId + '\n';
+                            logText += '   lat: ' + marker.lat + '\n';
+                            logText += '   lng: ' + marker.lng + '\n\n';
+                            
+                            // 检查格式
+                            const hasWrongFormat1 = marker.name && marker.name.includes('理想充电站 -');
+                            const hasWrongFormat2 = marker.description && marker.description.includes('理想汽车充电站');
+                            const hasWrongFormat3 = marker.description && marker.description.includes('理想充电站 -');
+                            
+                            if (hasWrongFormat1 || hasWrongFormat2 || hasWrongFormat3) {
+                                html += '<div class="data-item">';
+                                html += '<span class="field">❌ 错误格式</span>';
+                                html += '<span class="value">发现旧格式数据！</span><br>';
+                                html += '<span class="field">name:</span> <span class="value error">' + marker.name + '</span><br>';
+                                html += '<span class="field">description:</span> <span class="value error">' + marker.description + '</span>';
+                                html += '</div>';
+                            } else {
+                                html += '<div class="data-item">';
+                                html += '<span class="field">✓ 正确格式</span><br>';
+                                html += '<span class="field">name:</span> <span class="value success">' + marker.name + '</span><br>';
+                                html += '<span class="field">description:</span> <span class="value success">' + marker.description + '</span>';
+                                html += '</div>';
+                            }
+                        });
+                    } else {
+                        html += '<div class="info-box"><strong class="warning">⚠️ 未发现理想充电站标记</strong><br>请先在 add-marker.html 中批量添加理想充电站</div>';
+                    }
+                    
+                    // 检查分类
+                    const categoriesData = localStorage.getItem('mapCategories');
+                    logText += '\n3. localStorage 中的 mapCategories:\n';
+                    if (categoriesData) {
+                        const categories = JSON.parse(categoriesData);
+                        logText += '   总数：' + categories.length + '\n';
+                        const idealCategory = categories.find(c => c.name === '理想充电站');
+                        if (idealCategory) {
+                            logText += '   理想充电站分类：存在\n';
+                            logText += '   ID: ' + idealCategory.id + '\n';
+                            logText += '   颜色：' + idealCategory.color + '\n';
+                        } else {
+                            logText += '   理想充电站分类：不存在\n';
+                        }
+                    } else {
+                        logText += '   无数据\n';
+                    }
+                    
+                } catch (e) {
+                    logText += '   解析失败：' + e.message + '\n';
+                    html += '<div class="info-box"><strong class="error">❌ 数据解析失败：</strong>' + e.message + '</div>';
+                }
+            } else {
+                html += '<div class="info-box"><strong class="warning">⚠️ localStorage 中无标记数据</strong><br>请先在 add-marker.html 中添加标记</div>';
+            }
+            
+            logText += '\n=== 检查结束 ===';
+            dataLog.textContent = logText;
+            resultContent.innerHTML = html;
+        }
+        
+        // 页面加载时自动检查
+        window.addEventListener('load', function() {
+            console.log('诊断工具已加载');
+            console.log('请按照页面上的步骤进行操作');
+        });
+    </script>
+</body>
+</html>
