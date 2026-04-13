@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>测试理想充电站数据</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .station {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #FF9800;
+        }
+        .station h3 {
+            margin: 0 0 10px 0;
+            color: #FF9800;
+        }
+        .station p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .xpeng, .ideal {
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .xpeng {
+            background: #e3f2fd;
+            border: 2px solid #2196F3;
+        }
+        .ideal {
+            background: #fff3e0;
+            border: 2px solid #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 理想充电站数据测试</h1>
+        
+        <div id="test-results"></div>
+        
+        <h2>前 5 个充电站对比：</h2>
+        <div class="compare" id="comparison"></div>
+        
+        <h2>所有理想充电站数据：</h2>
+        <div id="all-stations"></div>
+    </div>
+    
+    <script src="app.js?t=<?php echo time(); ?>"></script>
+    <script>
+        // 如果不支持 PHP，用 JS 动态加载
+        if (typeof batchAddIdealChargingStations === 'undefined') {
+            var script = document.createElement('script');
+            script.src = 'app.js?t=' + Date.now();
+            document.head.appendChild(script);
+            script.onload = runTest;
+        } else {
+            runTest();
+        }
+        
+        function runTest() {
+            const resultsDiv = document.getElementById('test-results');
+            const comparisonDiv = document.getElementById('comparison');
+            const allStationsDiv = document.getElementById('all-stations');
+            
+            resultsDiv.innerHTML = '<p style="color: green; font-weight: bold;">✅ app.js 加载成功！</p>';
+            
+            // 获取理想充电站数据
+            const idealStations = [
+                { name: '理想充电站 宝安壹方城', lat: 22.552141, lng: 113.887684, address: '宝安区新安街道新湖路 99 号' },
+                { name: '理想充电站 宝安海雅缤纷城', lat: 22.558146, lng: 113.874531, address: '宝安区新安街道建安一路 99 号' },
+                { name: '理想充电站 宝安欢乐港湾', lat: 22.559677, lng: 113.878939, address: '宝安区宝兴路欢乐港湾' },
+                { name: '理想充电站 宝安大仟里', lat: 22.601817, lng: 113.869338, address: '宝安区西乡街道海城路 3 号' },
+                { name: '理想充电站 宝安中粮大悦城', lat: 22.540712, lng: 113.839603, address: '宝安区新安街道创业二路与新安一路交汇处' }
+            ];
+            
+            // 小鹏充电站数据（参考）
+            const xpengStations = [
+                { name: '小鹏充电站 宝安壹方城', lat: 22.552141, lng: 113.887684, address: '宝安区新安街道新湖路 99 号' },
+                { name: '小鹏充电站 宝安海雅缤纷城', lat: 22.558146, lng: 113.874531, address: '宝安区新安街道建安一路 99 号' },
+                { name: '小鹏充电站 宝安欢乐港湾', lat: 22.559677, lng: 113.878939, address: '宝安区宝兴路欢乐港湾' },
+                { name: '小鹏充电站 宝安大仟里', lat: 22.601817, lng: 113.869338, address: '宝安区西乡街道海城路 3 号' },
+                { name: '小鹏充电站 宝安中粮大悦城', lat: 22.540712, lng: 113.839603, address: '宝安区新安街道创业二路与新安一路交汇处' }
+            ];
+            
+            // 显示对比
+            let comparisonHtml = '';
+            for (let i = 0; i < 5; i++) {
+                comparisonHtml += `
+                    <div class="xpeng">
+                        <h3>小鹏 ${i+1}</h3>
+                        <p><strong>名称:</strong> ${xpengStations[i].name}</p>
+                        <p><strong>地址:</strong> ${xpengStations[i].address}</p>
+                    </div>
+                    <div class="ideal">
+                        <h3>理想 ${i+1}</h3>
+                        <p><strong>名称:</strong> ${idealStations[i].name}</p>
+                        <p><strong>地址:</strong> ${idealStations[i].address}</p>
+                    </div>
+                `;
+            }
+            comparisonDiv.innerHTML = comparisonHtml;
+            
+            // 显示所有理想充电站
+            let allHtml = '';
+            idealStations.forEach((station, i) => {
+                allHtml += `
+                    <div class="station">
+                        <h3>${station.name}</h3>
+                        <p><strong>地址:</strong> ${station.address}</p>
+                        <p><strong>坐标:</strong> ${station.lat}, ${station.lng}</p>
+                    </div>
+                `;
+            });
+            allStationsDiv.innerHTML = allHtml;
+            
+            // 验证格式
+            console.log('理想充电站数据验证:');
+            idealStations.forEach(station => {
+                console.log('名称:', station.name);
+                console.log('地址:', station.address);
+                console.log('---');
+            });
+        }
+    </script>
+</body>
+</html>
