@@ -635,7 +635,7 @@
     <!-- 云开发 SDK -->
     <script src="https://imgcache.qq.com/qcloud/tcbjs/1.11.1/tcb.js" onerror="console.warn('云开发 SDK 加载失败')"></script>
     <!-- 高德地图 API -->
-    <script src="https://webapi.amap.com/maps?v=1.4.15&key=9b110f6d6acaf2e12af4a985617579ff"></script>
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=4214ffb1464f3d9ffd569072100f3f3e"></script>
     <!-- 添加版本号避免缓存 -->
     <script>
         // 动态加载 app.js，添加时间戳避免缓存
@@ -734,7 +734,7 @@
                 return;
             }
 
-            const url = 'https://restapi.amap.com/v3/place/text?key=9b110f6d6acaf2e12af4a985617579ff&keywords=' + encodeURIComponent(keyword) + '&city=深圳&offset=10&page=1&extensions=all';
+            const url = 'https://restapi.amap.com/v3/place/text?key=4214ffb1464f3d9ffd569072100f3f3e&keywords=' + encodeURIComponent(keyword) + '&city=深圳&offset=10&page=1&extensions=all';
 
             fetch(url)
                 .then(function(response) { return response.json(); })
@@ -789,7 +789,7 @@
 
         // 获取详细地址信息
         function getAddressDetail(lng, lat, fallbackAddress) {
-            const url = 'https://restapi.amap.com/v3/geocode/regeo?key=9b110f6d6acaf2e12af4a985617579ff&location=' + lng + ',' + lat + '&extensions=all';
+            const url = 'https://restapi.amap.com/v3/geocode/regeo?key=4214ffb1464f3d9ffd569072100f3f3e&location=' + lng + ',' + lat + '&extensions=all';
 
             fetch(url)
                 .then(function(response) { return response.json(); })
