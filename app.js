@@ -211,9 +211,11 @@ function initMap() {
             center: [116.397428, 39.90923]
         });
         
-        // 添加地图控件
-        map.addControl(new AMap.Scale());
-        map.addControl(new AMap.ToolBar());
+        // 加载插件并添加地图控件
+        AMap.plugin(['AMap.Scale', 'AMap.ToolBar'], function() {
+            map.addControl(new AMap.Scale());
+            map.addControl(new AMap.ToolBar());
+        });
         
         // 加载已有标注
         loadMarkers();
@@ -796,4 +798,193 @@ document.addEventListener('DOMContentLoaded', function() {
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     console.log('DOM 已加载，立即初始化');
     setTimeout(initApp, 100);
+}
+
+// ==================== 批量添加充电站功能 ====================
+
+// 理想充电站数据
+const IDEAL_CHARGING_STATIONS = [
+    { name: '理想充电站 宝安壹方城', lat: 22.552141, lng: 113.887684, address: '宝安区新安街道新湖路 99 号' },
+    { name: '理想充电站 宝安海雅缤纷城', lat: 22.558146, lng: 113.874531, address: '宝安区新安街道建安一路 99 号' },
+    { name: '理想充电站 宝安欢乐港湾', lat: 22.559677, lng: 113.878939, address: '宝安区宝兴路欢乐港湾' },
+    { name: '理想充电站 宝安大仟里', lat: 22.601817, lng: 113.869338, address: '宝安区西乡街道海城路 3 号' },
+    { name: '理想充电站 宝安中粮大悦城', lat: 22.540712, lng: 113.839603, address: '宝安区新安街道创业二路与新安一路交汇处' },
+    { name: '理想充电站 南山万象天地', lat: 22.541645, lng: 113.944387, address: '南山区深南大道 9668 号' },
+    { name: '理想充电站 南山海岸城', lat: 22.518903, lng: 113.936347, address: '南山区文心五路 33 号' },
+    { name: '理想充电站 南山深圳湾万象城', lat: 22.518347, lng: 113.944213, address: '南山区科苑南路 2888 号' },
+    { name: '理想充电站 福田星河 COCO Park', lat: 22.538823, lng: 114.057437, address: '福田区福华三路 268 号' },
+    { name: '理想充电站 福田皇庭广场', lat: 22.533456, lng: 114.057437, address: '福田区福华三路 118 号' }
+];
+
+// 小鹏充电站数据
+const XPENG_CHARGING_STATIONS = [
+    { name: '小鹏充电站 宝安壹方城', lat: 22.552141, lng: 113.887684, address: '宝安区新安街道新湖路 99 号' },
+    { name: '小鹏充电站 宝安海雅缤纷城', lat: 22.558146, lng: 113.874531, address: '宝安区新安街道建安一路 99 号' },
+    { name: '小鹏充电站 宝安欢乐港湾', lat: 22.559677, lng: 113.878939, address: '宝安区宝兴路欢乐港湾' },
+    { name: '小鹏充电站 宝安大仟里', lat: 22.601817, lng: 113.869338, address: '宝安区西乡街道海城路 3 号' },
+    { name: '小鹏充电站 宝安中粮大悦城', lat: 22.540712, lng: 113.839603, address: '宝安区新安街道创业二路与新安一路交汇处' },
+    { name: '小鹏充电站 南山万象天地', lat: 22.541645, lng: 113.944387, address: '南山区深南大道 9668 号' },
+    { name: '小鹏充电站 南山海岸城', lat: 22.518903, lng: 113.936347, address: '南山区文心五路 33 号' },
+    { name: '小鹏充电站 南山深圳湾万象城', lat: 22.518347, lng: 113.944213, address: '南山区科苑南路 2888 号' },
+    { name: '小鹏充电站 福田星河 COCO Park', lat: 22.538823, lng: 114.057437, address: '福田区福华三路 268 号' },
+    { name: '小鹏充电站 福田皇庭广场', lat: 22.533456, lng: 114.057437, address: '福田区福华三路 118 号' }
+];
+
+// 批量添加理想充电站
+function batchAddIdealChargingStations() {
+    console.log('开始批量添加理想充电站...');
+    
+    // 获取或创建理想充电站分类
+    let idealCategory = categories.find(c => c.name === '理想充电站');
+    if (!idealCategory) {
+        idealCategory = {
+            id: 'ideal_charging_' + Date.now(),
+            name: '理想充电站',
+            color: '#FF9800',
+            isDefault: false
+        };
+        categories.push(idealCategory);
+        saveCategories();
+    }
+    
+    // 获取现有标注
+    let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
+    let addedCount = 0;
+    let skippedCount = 0;
+    
+    IDEAL_CHARGING_STATIONS.forEach(station => {
+        // 检查是否已存在
+        const exists = allMarkers.some(m => 
+            Math.abs(m.lat - station.lat) < 0.0001 && 
+            Math.abs(m.lng - station.lng) < 0.0001
+        );
+        
+        if (!exists) {
+            const newMarker = {
+                id: 'marker_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                name: station.name,
+                address: station.address,
+                lat: station.lat,
+                lng: station.lng,
+                category: idealCategory.id,
+                description: '理想汽车充电站',
+                createdAt: new Date().toISOString()
+            };
+            
+            allMarkers.push(newMarker);
+            addedCount++;
+        } else {
+            skippedCount++;
+        }
+    });
+    
+    // 保存到本地存储
+    localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
+    
+    // 如果在地图页面，刷新地图标注
+    if (map) {
+        markers.forEach(m => m.marker.setMap(null));
+        markers = [];
+        loadMarkers();
+    }
+    
+    alert(`批量添加完成！\n成功添加: ${addedCount} 个\n跳过重复: ${skippedCount} 个`);
+    
+    // 更新分类列表显示
+    if (typeof updateCategoryList === 'function') {
+        updateCategoryList();
+    }
+}
+
+// 批量添加小鹏充电站
+function batchAddXpengChargingStations() {
+    console.log('开始批量添加小鹏充电站...');
+    
+    // 获取或创建小鹏充电站分类
+    let xpengCategory = categories.find(c => c.name === '小鹏充电站');
+    if (!xpengCategory) {
+        xpengCategory = {
+            id: 'xpeng_charging_' + Date.now(),
+            name: '小鹏充电站',
+            color: '#3366CC',
+            isDefault: false
+        };
+        categories.push(xpengCategory);
+        saveCategories();
+    }
+    
+    // 获取现有标注
+    let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
+    let addedCount = 0;
+    let skippedCount = 0;
+    
+    XPENG_CHARGING_STATIONS.forEach(station => {
+        // 检查是否已存在
+        const exists = allMarkers.some(m => 
+            Math.abs(m.lat - station.lat) < 0.0001 && 
+            Math.abs(m.lng - station.lng) < 0.0001
+        );
+        
+        if (!exists) {
+            const newMarker = {
+                id: 'marker_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                name: station.name,
+                address: station.address,
+                lat: station.lat,
+                lng: station.lng,
+                category: xpengCategory.id,
+                description: '小鹏汽车充电站',
+                createdAt: new Date().toISOString()
+            };
+            
+            allMarkers.push(newMarker);
+            addedCount++;
+        } else {
+            skippedCount++;
+        }
+    });
+    
+    // 保存到本地存储
+    localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
+    
+    // 如果在地图页面，刷新地图标注
+    if (map) {
+        markers.forEach(m => m.marker.setMap(null));
+        markers = [];
+        loadMarkers();
+    }
+    
+    alert(`批量添加完成！\n成功添加: ${addedCount} 个\n跳过重复: ${skippedCount} 个`);
+    
+    // 更新分类列表显示
+    if (typeof updateCategoryList === 'function') {
+        updateCategoryList();
+    }
+}
+
+// 清空所有数据（调试用）
+function clearAllData() {
+    if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) {
+        return;
+    }
+    
+    localStorage.removeItem('mapMarkers');
+    localStorage.removeItem('mapCategories');
+    
+    // 清除地图上的标注
+    if (markers) {
+        markers.forEach(m => {
+            if (m.marker) m.marker.setMap(null);
+        });
+    }
+    markers = [];
+    
+    // 重新初始化分类
+    categories = [];
+    initDefaultCategories();
+    
+    alert('所有数据已清空！');
+    
+    // 刷新页面
+    location.reload();
 }
