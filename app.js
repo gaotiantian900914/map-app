@@ -242,9 +242,53 @@ function loadMarkers() {
 function addMarkerToMap(data) {
     if (!map) return;
     
+    // 获取分类信息
+    const category = categories.find(c => c.id === (data.category || 'default')) || categories[0];
+    const categoryColor = category ? category.color : '#2196F3';
+    
+    // 根据分类颜色创建不同颜色的标记
+    let markerIcon;
+    if (categoryColor === '#FF9800' || categoryColor === 'orange') {
+        // 理想充电站 - 橙色
+        markerIcon = new AMap.Icon({
+            size: new AMap.Size(32, 32),
+            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_orange.png',
+            imageSize: new AMap.Size(32, 32)
+        });
+    } else if (categoryColor === '#3366CC' || categoryColor === '#2196F3' || categoryColor === 'blue') {
+        // 小鹏充电站/蓝色 - 蓝色
+        markerIcon = new AMap.Icon({
+            size: new AMap.Size(32, 32),
+            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+            imageSize: new AMap.Size(32, 32)
+        });
+    } else if (categoryColor === '#4CAF50' || categoryColor === 'green') {
+        // 绿色
+        markerIcon = new AMap.Icon({
+            size: new AMap.Size(32, 32),
+            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png',
+            imageSize: new AMap.Size(32, 32)
+        });
+    } else if (categoryColor === '#f44336' || categoryColor === 'red') {
+        // 红色
+        markerIcon = new AMap.Icon({
+            size: new AMap.Size(32, 32),
+            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
+            imageSize: new AMap.Size(32, 32)
+        });
+    } else {
+        // 默认蓝色
+        markerIcon = new AMap.Icon({
+            size: new AMap.Size(32, 32),
+            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+            imageSize: new AMap.Size(32, 32)
+        });
+    }
+    
     const marker = new AMap.Marker({
         position: [data.lng, data.lat],
         title: data.name,
+        icon: markerIcon,
         animation: 'AMAP_ANIMATION_DROP'
     });
     
@@ -906,11 +950,12 @@ function batchAddXpengChargingStations() {
         xpengCategory = {
             id: 'xpeng_charging_' + Date.now(),
             name: '小鹏充电站',
-            color: '#3366CC',
+            color: '#2196F3',
             isDefault: false
         };
         categories.push(xpengCategory);
         saveCategories();
+        console.log('创建小鹏充电站分类:', xpengCategory);
     }
     
     // 获取现有标注
