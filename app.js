@@ -261,25 +261,34 @@ function addMarkerToMap(data) {
         return;
     }
     
-    // 获取分类信息
-    const category = categories.find(c => c.id === (data.category || 'default')) || categories[0];
+    // 直接从 localStorage 获取最新分类数据
+    const savedCategories = JSON.parse(localStorage.getItem('mapCategories') || '[]');
+    const category = savedCategories.find(c => c.id === (data.category || 'default')) || 
+                     (savedCategories.length > 0 ? savedCategories[0] : null);
     const categoryColor = category ? category.color : '#2196F3';
+    const categoryName = category ? category.name : '默认分类';
     
-    console.log('添加标记:', data.name, '分类 ID:', data.category, '分类:', category ? category.name : '未找到', '分类颜色:', categoryColor);
+    console.log('=== 添加标记详情 ===');
+    console.log('标记名称:', data.name);
+    console.log('标记分类 ID:', data.category);
+    console.log('查找到的分类:', categoryName);
+    console.log('分类颜色代码:', categoryColor);
     
     // 根据分类颜色创建不同颜色的标记
     let markerIcon;
+    let iconType = '';
+    
     // 理想充电站 - 橙色 (#FF9800)
     if (categoryColor === '#FF9800') {
-        console.log('使用橙色标记');
+        iconType = '橙色 (理想充电站)';
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_orange.png',
             imageSize: new AMap.Size(32, 32)
         });
-    // 小鹏充电站/蓝色 - 蓝色 (#2196F3)
+    // 小鹏充电站/蓝色 - 蓝色 (#2196F3 或 #3366CC)
     } else if (categoryColor === '#2196F3' || categoryColor === '#3366CC') {
-        console.log('使用蓝色标记');
+        iconType = '蓝色 (小鹏充电站)';
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
@@ -287,15 +296,15 @@ function addMarkerToMap(data) {
         });
     // 充电站 - 绿色 (#4CAF50)
     } else if (categoryColor === '#4CAF50') {
-        console.log('使用绿色标记');
+        iconType = '绿色 (充电站)';
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png',
             imageSize: new AMap.Size(32, 32)
         });
     // 停车场 - 红色 (#f44336)
-    } else if (categoryColor === '#f44336' || categoryColor === '#FF9800') {
-        console.log('使用红色标记');
+    } else if (categoryColor === '#f44336') {
+        iconType = '红色 (停车场)';
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
@@ -303,13 +312,17 @@ function addMarkerToMap(data) {
         });
     } else {
         // 默认蓝色
-        console.log('使用默认蓝色标记，颜色:', categoryColor);
+        iconType = '默认蓝色';
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
             imageSize: new AMap.Size(32, 32)
         });
     }
+    
+    console.log('使用图标类型:', iconType);
+    console.log('图标对象:', markerIcon);
+    console.log('===================');
     
     const marker = new AMap.Marker({
         position: [data.lng, data.lat],
@@ -343,7 +356,7 @@ function addMarkerToMap(data) {
     
     marker.setMap(map);
     markers.push({ marker: marker, data: data });
-    console.log('标记添加成功:', data.name, '图标:', markerIcon);
+    console.log('✓ 标记添加成功:', data.name, '颜色:', iconType);
 }
 
 // ==================== 搜索功能 ====================
@@ -855,9 +868,12 @@ const XPENG_CHARGING_STATIONS = [
 ];
 
 function batchAddIdealChargingStations() {
-    console.log('开始批量添加理想充电站...');
+    console.log('=== 开始批量添加理想充电站 ===');
     
-    let idealCategory = categories.find(c => c.name === '理想充电站');
+    // 先从 localStorage 获取最新分类
+    const savedCategories = JSON.parse(localStorage.getItem('mapCategories') || '[]');
+    let idealCategory = savedCategories.find(c => c.name === '理想充电站');
+    
     if (!idealCategory) {
         idealCategory = {
             id: 'ideal_charging_' + Date.now(),
@@ -868,6 +884,8 @@ function batchAddIdealChargingStations() {
         categories.push(idealCategory);
         saveCategories();
         console.log('创建理想充电站分类:', idealCategory);
+    } else {
+        console.log('使用已存在的理想充电站分类:', idealCategory);
     }
     
     let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
@@ -894,9 +912,10 @@ function batchAddIdealChargingStations() {
             
             allMarkers.push(newMarker);
             addedCount++;
-            console.log('添加理想充电站:', station.name);
+            console.log('添加理想充电站:', station.name, '分类 ID:', idealCategory.id, '颜色:', idealCategory.color);
         } else {
             skippedCount++;
+            console.log('跳过已存在的充电站:', station.name);
         }
     });
     
@@ -913,12 +932,17 @@ function batchAddIdealChargingStations() {
     if (typeof updateCategoryList === 'function') {
         updateCategoryList();
     }
+    
+    console.log('=== 理想充电站批量添加完成 ===');
 }
 
 function batchAddXpengChargingStations() {
-    console.log('开始批量添加小鹏充电站...');
+    console.log('=== 开始批量添加小鹏充电站 ===');
     
-    let xpengCategory = categories.find(c => c.name === '小鹏充电站');
+    // 先从 localStorage 获取最新分类
+    const savedCategories = JSON.parse(localStorage.getItem('mapCategories') || '[]');
+    let xpengCategory = savedCategories.find(c => c.name === '小鹏充电站');
+    
     if (!xpengCategory) {
         xpengCategory = {
             id: 'xpeng_charging_' + Date.now(),
@@ -929,6 +953,8 @@ function batchAddXpengChargingStations() {
         categories.push(xpengCategory);
         saveCategories();
         console.log('创建小鹏充电站分类:', xpengCategory);
+    } else {
+        console.log('使用已存在的小鹏充电站分类:', xpengCategory);
     }
     
     let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
@@ -955,9 +981,10 @@ function batchAddXpengChargingStations() {
             
             allMarkers.push(newMarker);
             addedCount++;
-            console.log('添加小鹏充电站:', station.name);
+            console.log('添加小鹏充电站:', station.name, '分类 ID:', xpengCategory.id, '颜色:', xpengCategory.color);
         } else {
             skippedCount++;
+            console.log('跳过已存在的充电站:', station.name);
         }
     });
     
@@ -974,6 +1001,8 @@ function batchAddXpengChargingStations() {
     if (typeof updateCategoryList === 'function') {
         updateCategoryList();
     }
+    
+    console.log('=== 小鹏充电站批量添加完成 ===');
 }
 
 function clearAllData() {
