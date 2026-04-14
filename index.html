@@ -719,16 +719,14 @@
                     <div id="searchResults" class="search-results"></div>
                 </div>
 
-                <!-- 标注列表 -->
-                <div class="section">
-                    <h3>📋 我的标注列表</h3>
-                    <button class="btn btn-danger" onclick="clearAllMarkers()">
-                        🗑️ 清空所有标注
+                <!-- 操作按钮 -->
+                <div class="section" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-danger" onclick="clearAllMarkers()" style="flex: 1; min-width: 120px;">
+                        🗑️ 清空标注
                     </button>
-                    <button class="btn btn-secondary" onclick="openCategoryManager()">
+                    <button class="btn btn-secondary" onclick="openCategoryManager()" style="flex: 1; min-width: 120px;">
                         🏷️ 分类管理
                     </button>
-                    <div id="markersList" class="markers-list"></div>
                 </div>
             </div>
 
