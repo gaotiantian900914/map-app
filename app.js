@@ -3094,7 +3094,7 @@ function showStatus(message, type) {
     }
 }
 
-// 搜索地点
+// 搜索地点 - 使用 Web 服务 API（兼容 Web 服务密钥）
 function searchPlace() {
     const input = document.getElementById('placeSearchInput');
     if (!input || !input.value.trim()) {
@@ -3105,70 +3105,37 @@ function searchPlace() {
     const keyword = input.value.trim();
     showStatus('正在搜索：' + keyword, 'info');
     
-    if (!placeSearch) {
-        console.error('placeSearch 未初始化，尝试重新初始化...');
-        // 尝试重新初始化 placeSearch
-        if (typeof AMap !== 'undefined') {
-            AMap.plugin('AMap.PlaceSearch', function() {
-                placeSearch = new AMap.PlaceSearch({
-                    pageSize: 10,
-                    pageIndex: 1
-                });
-                console.log('PlaceSearch 重新初始化完成');
-                // 重试搜索
-                performSearch(keyword);
-            });
-        } else {
-            showStatus('地图 API 未加载，请刷新页面', 'error');
-        }
-        return;
-    }
+    // 使用 Web 服务 API 直接调用（兼容 Web 服务密钥）
+    const url = 'https://restapi.amap.com/v3/place/text?key=' + AMAP_KEY + '&keywords=' + encodeURIComponent(keyword) + '&city=深圳&offset=10&page=1&extensions=all';
     
-    performSearch(keyword);
-}
-
-// 执行搜索
-function performSearch(keyword) {
-    if (!placeSearch) {
-        showStatus('搜索服务不可用，请检查 API 密钥配置', 'error');
-        console.error('搜索失败：placeSearch 未初始化');
-        return;
-    }
-    
-    placeSearch.search(keyword, function(status, result) {
-        console.log('搜索结果:', status, result);
-        
-        // 检查是否是密钥错误
-        if (status === 'userkey_plat_mismatch' || (result && result.info === 'USERKEY_PLAT_MISMATCH')) {
-            showStatus('API 密钥配置错误：当前密钥不支持 Web 端访问，请更换密钥', 'error');
-            console.error('搜索失败：API 密钥平台限制不匹配。请在高德开放平台检查密钥配置，确保允许 Web 端访问。');
-            return;
-        }
-        
-        if (status === 'complete' && result && result.info === 'OK') {
-            if (result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
-                const poi = result.poiList.pois[0];
-                const location = poi.location;
+    fetch(url)
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            console.log('搜索结果:', data);
+            
+            if (data.status === '1' && data.pois && data.pois.length > 0) {
+                const poi = data.pois[0];
+                const location = poi.location.split(',');
+                const lng = parseFloat(location[0]);
+                const lat = parseFloat(location[1]);
                 
-                console.log('找到地点:', poi.name, location);
+                console.log('找到地点:', poi.name, lat, lng);
                 
                 // 将地图中心移动到搜索结果
-                map.setCenter([location.lng, location.lat]);
-                map.setZoom(16);
+                if (map) {
+                    map.setCenter([lng, lat]);
+                    map.setZoom(16);
+                }
                 
                 showStatus('搜索成功：' + poi.name, 'success');
             } else {
                 showStatus('未找到相关地点', 'error');
             }
-        } else {
-            console.error('搜索失败:', status, result);
-            let errorMsg = '搜索失败';
-            if (result && result.info) {
-                errorMsg += '：' + result.info;
-            }
-            showStatus(errorMsg + ', 请重试', 'error');
-        }
-    });
+        })
+        .catch(function(error) {
+            console.error('搜索失败:', error);
+            showStatus('搜索失败，请检查网络连接', 'error');
+        });
 }
 
 // 添加标记
