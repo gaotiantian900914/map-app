@@ -66,7 +66,7 @@ function initCloudBase() {
 }
 
 // 高德地图API Key - Web服务API
-const AMAP_KEY = '45461b14046c9bda310ce713420c84d4';
+const AMAP_KEY = '9b110f6d6acaf2e12af4a985617579ff';
 
 // 颜色配置
 const COLOR_MAP = {
@@ -3106,12 +3106,44 @@ function searchPlace() {
     showStatus('正在搜索：' + keyword, 'info');
     
     if (!placeSearch) {
-        showStatus('搜索服务未初始化', 'error');
+        console.error('placeSearch 未初始化，尝试重新初始化...');
+        // 尝试重新初始化 placeSearch
+        if (typeof AMap !== 'undefined') {
+            AMap.plugin('AMap.PlaceSearch', function() {
+                placeSearch = new AMap.PlaceSearch({
+                    pageSize: 10,
+                    pageIndex: 1
+                });
+                console.log('PlaceSearch 重新初始化完成');
+                // 重试搜索
+                performSearch(keyword);
+            });
+        } else {
+            showStatus('地图 API 未加载，请刷新页面', 'error');
+        }
+        return;
+    }
+    
+    performSearch(keyword);
+}
+
+// 执行搜索
+function performSearch(keyword) {
+    if (!placeSearch) {
+        showStatus('搜索服务不可用，请检查 API 密钥配置', 'error');
+        console.error('搜索失败：placeSearch 未初始化');
         return;
     }
     
     placeSearch.search(keyword, function(status, result) {
         console.log('搜索结果:', status, result);
+        
+        // 检查是否是密钥错误
+        if (status === 'userkey_plat_mismatch' || (result && result.info === 'USERKEY_PLAT_MISMATCH')) {
+            showStatus('API 密钥配置错误：当前密钥不支持 Web 端访问，请更换密钥', 'error');
+            console.error('搜索失败：API 密钥平台限制不匹配。请在高德开放平台检查密钥配置，确保允许 Web 端访问。');
+            return;
+        }
         
         if (status === 'complete' && result && result.info === 'OK') {
             if (result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
@@ -3130,7 +3162,11 @@ function searchPlace() {
             }
         } else {
             console.error('搜索失败:', status, result);
-            showStatus('搜索失败，请重试', 'error');
+            let errorMsg = '搜索失败';
+            if (result && result.info) {
+                errorMsg += '：' + result.info;
+            }
+            showStatus(errorMsg + ', 请重试', 'error');
         }
     });
 }

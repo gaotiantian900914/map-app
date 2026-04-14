@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 密钥测试工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .test-section h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            padding-left: 12px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+        }
+        .result-box {
+            background: #f5f5f5;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #4CAF50; font-weight: bold; }
+        .error { color: #f44336; font-weight: bold; }
+        .warning { color: #ff9800; font-weight: bold; }
+        .info { color: #2196F3; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔑 API 密钥测试工具</h1>
+            <p>测试高德地图 API 密钥是否可用</p>
+        </div>
+        
+        <div class="content">
+            <div class="test-section">
+                <h2>📋 测试步骤</h2>
+                <div class="info-box" style="background: #e3f2fd; border-left: 4px solid #2196F3; padding: 15px; margin: 15px 0; border-radius: 4px;">
+                    <strong>请按顺序执行：</strong>
+                    <ol style="margin: 10px 0 0 20px; line-height: 1.8;">
+                        <li>点击"测试密钥 1"按钮</li>
+                        <li>查看测试结果</li>
+                        <li>如果密钥 1 不可用，点击"测试密钥 2"</li>
+                        <li>根据测试结果选择可用的密钥</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h2>🧪 测试密钥</h2>
+                <div>
+                    <button class="btn" onclick="testKey1()">测试密钥 1<br><small>45461b14046c9bda310ce713420c84d4</small></button>
+                    <button class="btn" onclick="testKey2()">测试密钥 2<br><small>9b110f6d6acaf2e12af4a985617579ff</small></button>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h2>📊 测试结果</h2>
+                <div id="result" class="result-box">点击"测试密钥"按钮开始测试...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const resultDiv = document.getElementById('result');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const icon = {
+                'success': '✅',
+                'error': '❌',
+                'warning': '⚠️',
+                'info': 'ℹ️'
+            }[type] || 'ℹ️';
+            
+            resultDiv.innerHTML += `[${timestamp}] ${icon} ${message}\n`;
+            resultDiv.scrollTop = resultDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            resultDiv.innerHTML = '';
+        }
+        
+        async function testKey1() {
+            clearLog();
+            log('开始测试密钥 1: 45461b14046c9bda310ce713420c84d4', 'info');
+            await testApiKey('45461b14046c9bda310ce713420c84d4');
+        }
+        
+        async function testKey2() {
+            clearLog();
+            log('开始测试密钥 2: 9b110f6d6acaf2e12af4a985617579ff', 'info');
+            await testApiKey('9b110f6d6acaf2e12af4a985617579ff');
+        }
+        
+        async function testApiKey(apiKey) {
+            try {
+                // 测试 Web API
+                log('正在加载高德地图 JS API...', 'info');
+                
+                // 动态创建 script 标签
+                const script = document.createElement('script');
+                script.src = 'https://webapi.amap.com/maps?v=1.4.15&key=' + apiKey;
+                
+                script.onload = function() {
+                    log('JS API 加载成功！', 'success');
+                    
+                    // 尝试初始化地图
+                    try {
+                        const testMap = new AMap.Map('test-map', {
+                            zoom: 10,
+                            center: [113.874531, 22.558146]
+                        });
+                        log('地图初始化成功！', 'success');
+                        log('✅ 该密钥可以正常使用！', 'success');
+                    } catch (e) {
+                        log('地图初始化失败：' + e.message, 'error');
+                    }
+                    
+                    // 尝试使用 PlaceSearch
+                    if (typeof AMap !== 'undefined') {
+                        AMap.plugin('AMap.PlaceSearch', function() {
+                            try {
+                                const placeSearch = new AMap.PlaceSearch({
+                                    pageSize: 10,
+                                    pageIndex: 1
+                                });
+                                log('PlaceSearch 初始化成功！', 'success');
+                                
+                                // 尝试搜索测试
+                                log('正在测试搜索功能...', 'info');
+                                placeSearch.search('深圳', function(status, result) {
+                                    if (status === 'complete' && result && result.info === 'OK') {
+                                        log('搜索测试成功！找到 ' + (result.poiList ? result.poiList.pois.length : 0) + ' 个结果', 'success');
+                                        log('✅ 该密钥完全可用！', 'success');
+                                    } else {
+                                        log('搜索测试失败：' + (result ? result.info : '未知错误'), 'error');
+                                        if (result && result.info === 'USERKEY_PLAT_MISMATCH') {
+                                            log('❌ 密钥平台限制不匹配！该密钥不允许 Web 端访问。', 'error');
+                                            log('解决方案：请在高德开放平台修改密钥配置，允许 Web 端访问', 'warning');
+                                        }
+                                    }
+                                });
+                            } catch (e) {
+                                log('PlaceSearch 初始化失败：' + e.message, 'error');
+                            }
+                        });
+                    }
+                };
+                
+                script.onerror = function() {
+                    log('JS API 加载失败！', 'error');
+                    log('❌ 该密钥不可用，可能原因：', 'error');
+                    log('  1. 密钥无效或已过期', 'error');
+                    log('  2. 密钥被设置了平台限制', 'error');
+                    log('  3. 密钥配额已用完', 'error');
+                    log('请更换其他密钥或到高德开放平台检查配置', 'warning');
+                };
+                
+                document.head.appendChild(script);
+                
+                // 5 秒超时
+                setTimeout(function() {
+                    if (resultDiv.innerHTML.indexOf('✅') === -1 && resultDiv.innerHTML.indexOf('❌') === -1) {
+                        log('测试超时，可能网络有问题', 'warning');
+                    }
+                }, 5000);
+                
+            } catch (e) {
+                log('测试过程出错：' + e.message, 'error');
+            }
+        }
+        
+        // 页面加载时自动测试密钥 1
+        window.addEventListener('load', function() {
+            log('页面加载完成，请点击按钮测试密钥', 'info');
+        });
+    </script>
+    
+    <!-- 隐藏的地图容器用于测试 -->
+    <div id="test-map" style="width: 1px; height: 1px; opacity: 0; position: absolute;"></div>
+</body>
+</html>
