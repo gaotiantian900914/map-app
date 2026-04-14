@@ -198,6 +198,8 @@ function initMap() {
         return;
     }
     
+    console.log('地图容器存在，检查 AMap...');
+    
     // 检查 AMap 是否加载
     if (typeof AMap === 'undefined') {
         console.error('AMap 未加载');
@@ -205,16 +207,27 @@ function initMap() {
         return;
     }
     
+    console.log('AMap 已加载，开始创建地图...');
+    
     try {
+        // 检测页面类型，设置不同的中心点
+        const isAddMarkerPage = window.location.pathname.includes('add-marker.html');
+        const centerPoint = isAddMarkerPage ? [114.057437, 22.538823] : [116.397428, 39.90923];
+        
+        console.log('创建地图，中心点:', centerPoint, '页面:', isAddMarkerPage ? 'add-marker.html' : 'index.html');
+        
         map = new AMap.Map('map', {
-            zoom: 12,
-            center: [116.397428, 39.90923]
+            zoom: isAddMarkerPage ? 12 : 12,
+            center: centerPoint
         });
+        
+        console.log('地图创建成功');
         
         // 加载插件并添加地图控件
         AMap.plugin(['AMap.Scale', 'AMap.ToolBar'], function() {
             map.addControl(new AMap.Scale());
             map.addControl(new AMap.ToolBar());
+            console.log('地图控件添加完成');
         });
         
         // 加载已有标注
@@ -223,7 +236,7 @@ function initMap() {
         console.log('地图初始化完成');
     } catch (error) {
         console.error('地图初始化失败:', error);
-        showStatus('地图初始化失败: ' + error.message, 'error');
+        showStatus('地图初始化失败：' + error.message, 'error');
     }
 }
 
@@ -232,52 +245,55 @@ function loadMarkers() {
     const saved = localStorage.getItem('mapMarkers');
     if (saved) {
         const markerData = JSON.parse(saved);
+        console.log('加载标注数据:', markerData.length, '个');
         markerData.forEach(data => {
             addMarkerToMap(data);
         });
+    } else {
+        console.log('没有保存的标注数据');
     }
 }
 
 // 添加标注到地图
 function addMarkerToMap(data) {
-    if (!map) return;
+    if (!map) {
+        console.log('地图未初始化，跳过添加标记');
+        return;
+    }
     
     // 获取分类信息
     const category = categories.find(c => c.id === (data.category || 'default')) || categories[0];
     const categoryColor = category ? category.color : '#2196F3';
     
+    console.log('添加标记:', data.name, '分类颜色:', categoryColor);
+    
     // 根据分类颜色创建不同颜色的标记
     let markerIcon;
     if (categoryColor === '#FF9800' || categoryColor === 'orange') {
-        // 理想充电站 - 橙色
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_orange.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else if (categoryColor === '#3366CC' || categoryColor === '#2196F3' || categoryColor === 'blue') {
-        // 小鹏充电站/蓝色 - 蓝色
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else if (categoryColor === '#4CAF50' || categoryColor === 'green') {
-        // 绿色
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else if (categoryColor === '#f44336' || categoryColor === 'red') {
-        // 红色
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else {
-        // 默认蓝色
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
@@ -317,6 +333,7 @@ function addMarkerToMap(data) {
     
     marker.setMap(map);
     markers.push({ marker: marker, data: data });
+    console.log('标记添加成功:', data.name);
 }
 
 // ==================== 搜索功能 ====================
@@ -333,7 +350,6 @@ function searchPlace() {
     
     showStatus('正在搜索...', 'info');
     
-    // 使用高德地图 Web 服务 API 进行搜索
     const url = `https://restapi.amap.com/v3/place/text?key=${AMAP_WEB_SERVICE_KEY}&keywords=${encodeURIComponent(keyword)}&offset=10&page=1&extensions=all`;
     
     fetch(url)
@@ -349,7 +365,7 @@ function searchPlace() {
         })
         .catch(error => {
             console.error('搜索失败:', error);
-            showStatus('搜索失败: ' + error.message, 'error');
+            showStatus('搜索失败：' + error.message, 'error');
         });
 }
 
@@ -379,12 +395,10 @@ function displayPlaceResults(pois) {
 function focusOnPlace(lng, lat, name) {
     if (!map) return;
     
-    // 清除之前的搜索标记
     if (searchResultMarker) {
         searchResultMarker.setMap(null);
     }
     
-    // 创建新的搜索标记（红色）
     searchResultMarker = new AMap.Marker({
         position: [lng, lat],
         title: name,
@@ -406,20 +420,15 @@ function focusOnPlace(lng, lat, name) {
     });
     
     searchResultMarker.setMap(map);
-    
-    // 将地图中心移动到该位置
     map.setCenter([lng, lat]);
     map.setZoom(16);
-    
-    // 打开信息窗口
     infoWindow.open(map, [lng, lat]);
     
-    showStatus(`已定位到: ${name}`, 'success');
+    showStatus(`已定位到：${name}`, 'success');
 }
 
 // ==================== 附近搜索功能 ====================
 
-// 搜索附近标注
 function searchNearby() {
     if (!map) {
         showStatus('地图尚未加载完成', 'error');
@@ -433,10 +442,8 @@ function searchNearby() {
     const centerLng = center.lng;
     const centerLat = center.lat;
     
-    // 获取所有标注
     const allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
     
-    // 计算距离并筛选
     const nearbyMarkers = [];
     allMarkers.forEach(marker => {
         const distance = calculateDistance(centerLat, centerLng, marker.lat, marker.lng);
@@ -448,21 +455,16 @@ function searchNearby() {
         }
     });
     
-    // 按距离排序
     nearbyMarkers.sort((a, b) => a.distance - b.distance);
     
-    // 显示搜索圆圈
     showSearchCircle(centerLng, centerLat, radius);
-    
-    // 显示结果
     displaySearchResults(nearbyMarkers, radius);
     
     showStatus(`找到 ${nearbyMarkers.length} 个附近标注`, 'success');
 }
 
-// 计算两点间距离（米）- 使用 Haversine 公式
 function calculateDistance(lat1, lng1, lat2, lng2) {
-    const R = 6371000; // 地球半径（米）
+    const R = 6371000;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -472,7 +474,6 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     return R * c;
 }
 
-// 显示搜索圆圈
 function showSearchCircle(lng, lat, radius) {
     if (searchCircle) {
         searchCircle.setMap(null);
@@ -491,7 +492,6 @@ function showSearchCircle(lng, lat, radius) {
     searchCircle.setMap(map);
 }
 
-// 显示搜索结果
 function displaySearchResults(nearbyMarkers, radius) {
     const container = document.getElementById('searchResults');
     
@@ -500,7 +500,6 @@ function displaySearchResults(nearbyMarkers, radius) {
         return;
     }
     
-    // 按分类统计
     const categoryCount = {};
     nearbyMarkers.forEach(marker => {
         const catId = marker.category || 'default';
@@ -529,7 +528,6 @@ function displaySearchResults(nearbyMarkers, radius) {
     container.innerHTML = html;
 }
 
-// 聚焦到指定标注
 function focusOnMarker(markerId) {
     const allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
     const markerData = allMarkers.find(m => m.id === markerId);
@@ -538,7 +536,6 @@ function focusOnMarker(markerId) {
         map.setCenter([markerData.lng, markerData.lat]);
         map.setZoom(17);
         
-        // 找到对应的 marker 并打开信息窗口
         const markerObj = markers.find(m => m.data.id === markerId);
         if (markerObj) {
             markerObj.marker.emit('click');
@@ -548,7 +545,6 @@ function focusOnMarker(markerId) {
 
 // ==================== 定位功能 ====================
 
-// 定位我的位置
 function locateMe() {
     showStatus('正在定位...', 'info');
     
@@ -566,7 +562,6 @@ function locateMe() {
                 map.setCenter([lng, lat]);
                 map.setZoom(16);
                 
-                // 添加定位标记
                 const locationMarker = new AMap.Marker({
                     position: [lng, lat],
                     title: '我的位置',
@@ -583,7 +578,7 @@ function locateMe() {
         },
         function(error) {
             console.error('定位失败:', error);
-            showStatus('定位失败: ' + error.message, 'error');
+            showStatus('定位失败：' + error.message, 'error');
         },
         {
             enableHighAccuracy: true,
@@ -595,7 +590,6 @@ function locateMe() {
 
 // ==================== 标注管理功能 ====================
 
-// 清空所有标注
 function clearAllMarkers() {
     if (!confirm('确定要清空所有标注吗？此操作不可恢复。')) {
         return;
@@ -603,7 +597,6 @@ function clearAllMarkers() {
     
     localStorage.removeItem('mapMarkers');
     
-    // 清除地图上的标注
     markers.forEach(m => m.marker.setMap(null));
     markers = [];
     
@@ -612,7 +605,6 @@ function clearAllMarkers() {
 
 // ==================== 表格功能 ====================
 
-// 刷新标注表格
 function refreshMarkers() {
     const tbody = document.getElementById('markersTableBody');
     const noMarkersMessage = document.getElementById('noMarkersMessage');
@@ -652,12 +644,9 @@ function refreshMarkers() {
     });
     
     tbody.innerHTML = html;
-    
-    // 更新统计
     updateMarkerStats();
 }
 
-// 更新统计信息
 function updateMarkerStats() {
     const statsContainer = document.getElementById('markerStats');
     if (!statsContainer) return;
@@ -679,13 +668,11 @@ function updateMarkerStats() {
     statsContainer.innerHTML = html;
 }
 
-// 查看标注
 function viewMarker(markerId) {
     switchTab('map');
     setTimeout(() => focusOnMarker(markerId), 100);
 }
 
-// 删除单个标注
 function deleteMarker(markerId) {
     if (!confirm('确定要删除这个标注吗？')) {
         return;
@@ -695,10 +682,8 @@ function deleteMarker(markerId) {
     allMarkers = allMarkers.filter(m => m.id !== markerId);
     localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
     
-    // 刷新显示
     refreshMarkers();
     
-    // 如果当前在地图视图，刷新地图标注
     if (document.getElementById('mapView').style.display !== 'none') {
         markers.forEach(m => m.marker.setMap(null));
         markers = [];
@@ -708,7 +693,6 @@ function deleteMarker(markerId) {
     showStatus('标注已删除', 'success');
 }
 
-// 全选/取消全选
 function toggleSelectAll() {
     const selectAll = document.getElementById('selectAll');
     const checkboxes = document.querySelectorAll('.marker-checkbox');
@@ -716,7 +700,6 @@ function toggleSelectAll() {
     updateBatchDelete();
 }
 
-// 更新批量删除按钮状态
 function updateBatchDelete() {
     const checkedBoxes = document.querySelectorAll('.marker-checkbox:checked');
     const btn = document.getElementById('batchDeleteBtn');
@@ -725,7 +708,6 @@ function updateBatchDelete() {
     }
 }
 
-// 批量删除
 function batchDeleteMarkers() {
     const checkedBoxes = document.querySelectorAll('.marker-checkbox:checked');
     if (checkedBoxes.length === 0) {
@@ -745,7 +727,6 @@ function batchDeleteMarkers() {
     
     refreshMarkers();
     
-    // 如果当前在地图视图，刷新地图标注
     if (document.getElementById('mapView').style.display !== 'none') {
         markers.forEach(m => m.marker.setMap(null));
         markers = [];
@@ -755,7 +736,6 @@ function batchDeleteMarkers() {
     showStatus(`已删除 ${idsToDelete.length} 个标注`, 'success');
 }
 
-// 导出标注
 function exportMarkers() {
     const allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
     if (allMarkers.length === 0) {
@@ -778,19 +758,16 @@ function exportMarkers() {
     showStatus('标注已导出', 'success');
 }
 
-// 按分类筛选表格
 function filterTableByCategory() {
     refreshMarkers();
 }
 
-// 按关键词搜索表格
 function filterTableBySearch() {
     refreshMarkers();
 }
 
 // ==================== 工具函数 ====================
 
-// 显示状态消息
 function showStatus(message, type) {
     const statusDiv = document.getElementById('locationStatus');
     if (!statusDiv) return;
@@ -809,13 +786,9 @@ function showStatus(message, type) {
 function initApp() {
     console.log('应用初始化...');
     
-    // 加载分类
     loadCategories();
-    
-    // 初始化地图
     initMap();
     
-    // 检查 URL 参数
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('view') === 'table') {
         switchTab('table');
@@ -823,22 +796,21 @@ function initApp() {
         switchTab('category');
     }
     
-    // 如果在 add-marker.html 页面，更新分类选择器
     if (document.getElementById('categorySelect') && typeof updateAddMarkerCategorySelect === 'function') {
         updateAddMarkerCategorySelect();
     }
     if (document.getElementById('categoryList') && typeof updateCategoryList === 'function') {
         updateCategoryList();
     }
+    
+    console.log('应用初始化完成，地图状态:', map ? '已初始化' : '未初始化');
 }
 
-// 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOMContentLoaded 事件触发');
     initApp();
 });
 
-// 如果 DOM 已经加载完成（动态加载脚本的情况）
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     console.log('DOM 已加载，立即初始化');
     setTimeout(initApp, 100);
@@ -846,7 +818,6 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 
 // ==================== 批量添加充电站功能 ====================
 
-// 理想充电站数据
 const IDEAL_CHARGING_STATIONS = [
     { name: '理想充电站 宝安壹方城', lat: 22.552141, lng: 113.887684, address: '宝安区新安街道新湖路 99 号' },
     { name: '理想充电站 宝安海雅缤纷城', lat: 22.558146, lng: 113.874531, address: '宝安区新安街道建安一路 99 号' },
@@ -860,7 +831,6 @@ const IDEAL_CHARGING_STATIONS = [
     { name: '理想充电站 福田皇庭广场', lat: 22.533456, lng: 114.057437, address: '福田区福华三路 118 号' }
 ];
 
-// 小鹏充电站数据
 const XPENG_CHARGING_STATIONS = [
     { name: '小鹏充电站 宝安壹方城', lat: 22.552141, lng: 113.887684, address: '宝安区新安街道新湖路 99 号' },
     { name: '小鹏充电站 宝安海雅缤纷城', lat: 22.558146, lng: 113.874531, address: '宝安区新安街道建安一路 99 号' },
@@ -874,11 +844,9 @@ const XPENG_CHARGING_STATIONS = [
     { name: '小鹏充电站 福田皇庭广场', lat: 22.533456, lng: 114.057437, address: '福田区福华三路 118 号' }
 ];
 
-// 批量添加理想充电站
 function batchAddIdealChargingStations() {
     console.log('开始批量添加理想充电站...');
     
-    // 获取或创建理想充电站分类
     let idealCategory = categories.find(c => c.name === '理想充电站');
     if (!idealCategory) {
         idealCategory = {
@@ -889,15 +857,14 @@ function batchAddIdealChargingStations() {
         };
         categories.push(idealCategory);
         saveCategories();
+        console.log('创建理想充电站分类:', idealCategory);
     }
     
-    // 获取现有标注
     let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
     let addedCount = 0;
     let skippedCount = 0;
     
     IDEAL_CHARGING_STATIONS.forEach(station => {
-        // 检查是否已存在
         const exists = allMarkers.some(m => 
             Math.abs(m.lat - station.lat) < 0.0001 && 
             Math.abs(m.lng - station.lng) < 0.0001
@@ -917,34 +884,30 @@ function batchAddIdealChargingStations() {
             
             allMarkers.push(newMarker);
             addedCount++;
+            console.log('添加理想充电站:', station.name);
         } else {
             skippedCount++;
         }
     });
     
-    // 保存到本地存储
     localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
     
-    // 如果在地图页面，刷新地图标注
     if (map) {
         markers.forEach(m => m.marker.setMap(null));
         markers = [];
         loadMarkers();
     }
     
-    alert(`批量添加完成！\n成功添加: ${addedCount} 个\n跳过重复: ${skippedCount} 个`);
+    alert(`批量添加完成！\n成功添加：${addedCount} 个\n跳过重复：${skippedCount} 个`);
     
-    // 更新分类列表显示
     if (typeof updateCategoryList === 'function') {
         updateCategoryList();
     }
 }
 
-// 批量添加小鹏充电站
 function batchAddXpengChargingStations() {
     console.log('开始批量添加小鹏充电站...');
     
-    // 获取或创建小鹏充电站分类
     let xpengCategory = categories.find(c => c.name === '小鹏充电站');
     if (!xpengCategory) {
         xpengCategory = {
@@ -958,13 +921,11 @@ function batchAddXpengChargingStations() {
         console.log('创建小鹏充电站分类:', xpengCategory);
     }
     
-    // 获取现有标注
     let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
     let addedCount = 0;
     let skippedCount = 0;
     
     XPENG_CHARGING_STATIONS.forEach(station => {
-        // 检查是否已存在
         const exists = allMarkers.some(m => 
             Math.abs(m.lat - station.lat) < 0.0001 && 
             Math.abs(m.lng - station.lng) < 0.0001
@@ -984,30 +945,27 @@ function batchAddXpengChargingStations() {
             
             allMarkers.push(newMarker);
             addedCount++;
+            console.log('添加小鹏充电站:', station.name);
         } else {
             skippedCount++;
         }
     });
     
-    // 保存到本地存储
     localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
     
-    // 如果在地图页面，刷新地图标注
     if (map) {
         markers.forEach(m => m.marker.setMap(null));
         markers = [];
         loadMarkers();
     }
     
-    alert(`批量添加完成！\n成功添加: ${addedCount} 个\n跳过重复: ${skippedCount} 个`);
+    alert(`批量添加完成！\n成功添加：${addedCount} 个\n跳过重复：${skippedCount} 个`);
     
-    // 更新分类列表显示
     if (typeof updateCategoryList === 'function') {
         updateCategoryList();
     }
 }
 
-// 清空所有数据（调试用）
 function clearAllData() {
     if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) {
         return;
@@ -1016,7 +974,6 @@ function clearAllData() {
     localStorage.removeItem('mapMarkers');
     localStorage.removeItem('mapCategories');
     
-    // 清除地图上的标注
     if (markers) {
         markers.forEach(m => {
             if (m.marker) m.marker.setMap(null);
@@ -1024,12 +981,10 @@ function clearAllData() {
     }
     markers = [];
     
-    // 重新初始化分类
     categories = [];
     initDefaultCategories();
     
     alert('所有数据已清空！');
     
-    // 刷新页面
     location.reload();
 }
