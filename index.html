@@ -691,18 +691,15 @@
                         <label>输入地点名称</label>
                         <input type="text" id="placeSearchInput" placeholder="例如：天安门、故宫博物院" onkeypress="if(event.key==='Enter')searchPlace()">
                     </div>
-                    <button class="btn btn-warning" onclick="searchPlace()">
-                        🔍 搜索地点
-                    </button>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn btn-warning" onclick="searchPlace()" style="flex: 1;">
+                            🔍 搜索地点
+                        </button>
+                        <button class="btn btn-secondary" onclick="locateMe()" style="flex: 1;">
+                            📡 定位我的位置
+                        </button>
+                    </div>
                     <div id="placeSearchResults" class="place-search-results"></div>
-                </div>
-
-                <!-- 定位功能 -->
-                <div class="section">
-                    <h3>📍 定位功能</h3>
-                    <button class="btn btn-secondary" onclick="locateMe()">
-                        📡 定位我的位置
-                    </button>
                     <div id="locationStatus"></div>
                 </div>
 
