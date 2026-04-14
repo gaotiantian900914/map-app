@@ -66,7 +66,7 @@ function initCloudBase() {
 }
 
 // 高德地图API Key - Web服务API
-const AMAP_KEY = '45461b14046c9bda310ce713420c84d4';
+const AMAP_KEY = '9b110f6d6acaf2e12af4a985617579ff';
 
 // 颜色配置
 const COLOR_MAP = {
