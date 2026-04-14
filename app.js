@@ -265,35 +265,45 @@ function addMarkerToMap(data) {
     const category = categories.find(c => c.id === (data.category || 'default')) || categories[0];
     const categoryColor = category ? category.color : '#2196F3';
     
-    console.log('添加标记:', data.name, '分类颜色:', categoryColor);
+    console.log('添加标记:', data.name, '分类 ID:', data.category, '分类:', category ? category.name : '未找到', '分类颜色:', categoryColor);
     
     // 根据分类颜色创建不同颜色的标记
     let markerIcon;
-    if (categoryColor === '#FF9800' || categoryColor === 'orange') {
+    // 理想充电站 - 橙色 (#FF9800)
+    if (categoryColor === '#FF9800') {
+        console.log('使用橙色标记');
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_orange.png',
             imageSize: new AMap.Size(32, 32)
         });
-    } else if (categoryColor === '#3366CC' || categoryColor === '#2196F3' || categoryColor === 'blue') {
+    // 小鹏充电站/蓝色 - 蓝色 (#2196F3)
+    } else if (categoryColor === '#2196F3' || categoryColor === '#3366CC') {
+        console.log('使用蓝色标记');
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
             imageSize: new AMap.Size(32, 32)
         });
-    } else if (categoryColor === '#4CAF50' || categoryColor === 'green') {
+    // 充电站 - 绿色 (#4CAF50)
+    } else if (categoryColor === '#4CAF50') {
+        console.log('使用绿色标记');
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png',
             imageSize: new AMap.Size(32, 32)
         });
-    } else if (categoryColor === '#f44336' || categoryColor === 'red') {
+    // 停车场 - 红色 (#f44336)
+    } else if (categoryColor === '#f44336' || categoryColor === '#FF9800') {
+        console.log('使用红色标记');
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else {
+        // 默认蓝色
+        console.log('使用默认蓝色标记，颜色:', categoryColor);
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
@@ -333,7 +343,7 @@ function addMarkerToMap(data) {
     
     marker.setMap(map);
     markers.push({ marker: marker, data: data });
-    console.log('标记添加成功:', data.name);
+    console.log('标记添加成功:', data.name, '图标:', markerIcon);
 }
 
 // ==================== 搜索功能 ====================
