@@ -760,8 +760,8 @@ function showStatus(message, type) {
 
 // ==================== 页面初始化 ====================
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('页面加载完成，开始初始化...');
+function initApp() {
+    console.log('应用初始化...');
     
     // 加载分类
     loadCategories();
@@ -776,4 +776,24 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (urlParams.get('view') === 'category') {
         switchTab('category');
     }
+    
+    // 如果在 add-marker.html 页面，更新分类选择器
+    if (document.getElementById('categorySelect') && typeof updateAddMarkerCategorySelect === 'function') {
+        updateAddMarkerCategorySelect();
+    }
+    if (document.getElementById('categoryList') && typeof updateCategoryList === 'function') {
+        updateCategoryList();
+    }
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded 事件触发');
+    initApp();
 });
+
+// 如果 DOM 已经加载完成（动态加载脚本的情况）
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    console.log('DOM 已加载，立即初始化');
+    setTimeout(initApp, 100);
+}
