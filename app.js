@@ -3105,8 +3105,8 @@ function searchPlace() {
     const keyword = input.value.trim();
     showStatus('正在搜索：' + keyword, 'info');
     
-    // 使用 Web 服务 API 直接调用（兼容 Web 服务密钥）
-    const url = 'https://restapi.amap.com/v3/place/text?key=' + AMAP_KEY + '&keywords=' + encodeURIComponent(keyword) + '&city=深圳&offset=10&page=1&extensions=all';
+    // 使用 Web 服务 API 直接调用（使用 Web 服务密钥）
+    const url = 'https://restapi.amap.com/v3/place/text?key=4214ffb1464f3d9ffd569072100f3f3e&keywords=' + encodeURIComponent(keyword) + '&city=深圳&offset=10&page=1&extensions=all';
     
     fetch(url)
         .then(function(response) { return response.json(); })
@@ -3125,6 +3125,41 @@ function searchPlace() {
                 if (map) {
                     map.setCenter([lng, lat]);
                     map.setZoom(16);
+                    
+                    // 清除之前的搜索标记
+                    if (window.searchResultMarker) {
+                        window.searchResultMarker.setMap(null);
+                    }
+                    
+                    // 添加搜索结果标记
+                    window.searchResultMarker = new AMap.Marker({
+                        position: [lng, lat],
+                        title: poi.name,
+                        icon: new AMap.Icon({
+                            size: new AMap.Size(30, 40),
+                            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
+                            imageSize: new AMap.Size(30, 40)
+                        }),
+                        animation: 'AMAP_ANIMATION_DROP'
+                    });
+                    window.searchResultMarker.setMap(map);
+                    
+                    // 添加信息窗口
+                    const infoWindow = new AMap.InfoWindow({
+                        content: '<div style="padding: 10px;">' +
+                            '<h4 style="margin: 0 0 5px 0;">' + poi.name + '</h4>' +
+                            '<p style="margin: 0; font-size: 12px; color: #666;">' + (poi.address || '暂无地址') + '</p>' +
+                            '<p style="margin: 5px 0 0 0; font-size: 11px; color: #999;">坐标：' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</p>' +
+                            '</div>',
+                        offset: new AMap.Pixel(0, -30)
+                    });
+                    
+                    window.searchResultMarker.on('click', function() {
+                        infoWindow.open(map, [lng, lat]);
+                    });
+                    
+                    // 自动打开信息窗口
+                    infoWindow.open(map, [lng, lat]);
                 }
                 
                 showStatus('搜索成功：' + poi.name, 'success');
@@ -3136,6 +3171,152 @@ function searchPlace() {
             console.error('搜索失败:', error);
             showStatus('搜索失败，请检查网络连接', 'error');
         });
+}
+
+// 搜索附近标注
+function searchNearby() {
+    const radiusInput = document.getElementById('searchRadius');
+    const radius = radiusInput ? parseInt(radiusInput.value) : 1000;
+    
+    if (!map) {
+        showStatus('地图未初始化', 'error');
+        return;
+    }
+    
+    if (markers.length === 0) {
+        showStatus('还没有任何标注', 'error');
+        return;
+    }
+    
+    showStatus('正在搜索附近标注...', 'info');
+    
+    // 获取地图中心点
+    const center = map.getCenter();
+    const centerLng = center.lng;
+    const centerLat = center.lat;
+    
+    console.log('搜索中心点:', centerLat, centerLng, '半径:', radius, '米');
+    
+    // 清除之前的搜索圆圈
+    if (searchCircle) {
+        searchCircle.setMap(null);
+        searchCircle = null;
+    }
+    
+    // 绘制搜索范围圆圈
+    searchCircle = new AMap.Circle({
+        center: [centerLng, centerLat],
+        radius: radius,
+        strokeColor: '#2196F3',
+        strokeWeight: 2,
+        strokeOpacity: 0.8,
+        fillColor: '#2196F3',
+        fillOpacity: 0.1
+    });
+    searchCircle.setMap(map);
+    
+    // 搜索范围内的标记
+    const nearbyMarkers = [];
+    markers.forEach(function(marker) {
+        const distance = calculateDistance(centerLat, centerLng, marker.lat, marker.lng);
+        if (distance <= radius) {
+            nearbyMarkers.push({
+                marker: marker,
+                distance: distance
+            });
+        }
+    });
+    
+    // 按距离排序
+    nearbyMarkers.sort(function(a, b) {
+        return a.distance - b.distance;
+    });
+    
+    console.log('找到附近标注:', nearbyMarkers.length);
+    
+    // 显示结果
+    displaySearchResults(nearbyMarkers, radius);
+}
+
+// 计算两点之间的距离（米）- Haversine公式
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371000; // 地球半径（米）
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+// 显示搜索结果
+function displaySearchResults(nearbyMarkers, radius) {
+    const resultsDiv = document.getElementById('searchResults');
+    if (!resultsDiv) return;
+    
+    if (nearbyMarkers.length === 0) {
+        resultsDiv.innerHTML = '<div class="search-result-item" style="padding: 15px; color: #666; text-align: center;">在地图中心点 ' + radius + ' 米范围内没有找到标注</div>';
+        showStatus('在 ' + radius + ' 米范围内未找到标注', 'info');
+        return;
+    }
+    
+    // 按分类统计
+    const categoryCount = {};
+    nearbyMarkers.forEach(function(item) {
+        const category = categories.find(c => c.id === item.marker.categoryId);
+        const categoryName = category ? category.name : '未分类';
+        categoryCount[categoryName] = (categoryCount[categoryName] || 0) + 1;
+    });
+    
+    let html = '<div style="padding: 10px;">';
+    html += '<h4 style="margin: 0 0 10px 0; color: #333;">搜索结果</h4>';
+    html += '<p style="margin: 5px 0; color: #666; font-size: 13px;">在 ' + radius + ' 米范围内找到 <strong>' + nearbyMarkers.length + '</strong> 个标注</p>';
+    
+    // 显示分类统计
+    html += '<div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">';
+    html += '<p style="margin: 0 0 5px 0; font-size: 12px; color: #999;">分类统计：</p>';
+    for (const [name, count] of Object.entries(categoryCount)) {
+        html += '<span style="display: inline-block; margin: 2px 5px; padding: 2px 8px; background: #e3f2fd; border-radius: 3px; font-size: 12px;">' + name + ': ' + count + '</span>';
+    }
+    html += '</div>';
+    
+    // 显示标记列表
+    html += '<div style="max-height: 300px; overflow-y: auto;">';
+    nearbyMarkers.forEach(function(item, index) {
+        const marker = item.marker;
+        const distance = Math.round(item.distance);
+        const category = categories.find(c => c.id === marker.categoryId);
+        const categoryName = category ? category.name : '未分类';
+        
+        html += '<div class="search-result-item" style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;" onclick="focusOnMarker(\'' + marker.id + '\')">';
+        html += '<div style="font-weight: bold; color: #333;">' + (index + 1) + '. ' + marker.name + '</div>';
+        html += '<div style="font-size: 12px; color: #666; margin-top: 5px;">';
+        html += '<span style="color: #2196F3;">' + categoryName + '</span> | ';
+        html += '距离: ' + distance + ' 米';
+        html += '</div>';
+        html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+    
+    resultsDiv.innerHTML = html;
+    showStatus('找到 ' + nearbyMarkers.length + ' 个附近标注', 'success');
+}
+
+// 聚焦到指定标记
+function focusOnMarker(markerId) {
+    const marker = markers.find(m => m.id === markerId);
+    if (!marker || !map) return;
+    
+    map.setCenter([marker.lng, marker.lat]);
+    map.setZoom(16);
+    
+    // 找到对应的地图标记并触发点击
+    const markerObj = currentMarkers.find(m => m.id === markerId);
+    if (markerObj && markerObj.marker) {
+        markerObj.marker.emit('click');
+    }
 }
 
 // 添加标记
