@@ -252,22 +252,20 @@ function loadMarkers() {
     }
     
     const saved = localStorage.getItem('mapMarkers');
-    if (saved) {
-        const markerData = JSON.parse(saved);
-        console.log('加载标注数据:', markerData.length, '个');
-        
-        markerData.forEach((data, index) => {
-            // 延迟添加每个标记，避免地图渲染问题
-            setTimeout(() => {
-                addMarkerToMap(data);
-                if (index === markerData.length - 1) {
-                    console.log('所有标记加载完成');
-                }
-            }, index * 50);
-        });
-    } else {
+    if (!saved) {
         console.log('没有保存的标注数据');
+        return;
     }
+    
+    const markerData = JSON.parse(saved);
+    console.log('加载标注数据:', markerData.length, '个');
+    
+    // 立即添加所有标记，不延迟
+    markerData.forEach(data => {
+        addMarkerToMap(data);
+    });
+    
+    console.log('所有标记加载完成');
 }
 
 // 添加标注到地图
@@ -969,7 +967,7 @@ function batchAddIdealChargingStations() {
     
     localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
     
-    // 如果在地图页面，刷新地图标注
+    // 如果在地图页面，立即刷新地图标注
     if (map) {
         console.log('刷新地图上的标记...');
         // 清除现有标记
@@ -980,13 +978,8 @@ function batchAddIdealChargingStations() {
         });
         markers = [];
         
-        // 等待地图完全渲染后再加载标记
-        setTimeout(() => {
-            // 强制地图重新计算尺寸和中心点
-            map.resize();
-            console.log('地图尺寸重新计算完成');
-            loadMarkers();
-        }, 500);
+        // 立即重新加载，不延迟
+        loadMarkers();
     } else {
         console.log('地图未初始化，无法刷新标记');
     }
@@ -1054,7 +1047,7 @@ function batchAddXpengChargingStations() {
     
     localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
     
-    // 如果在地图页面，刷新地图标注
+    // 如果在地图页面，立即刷新地图标注
     if (map) {
         console.log('刷新地图上的标记...');
         // 清除现有标记
@@ -1065,13 +1058,8 @@ function batchAddXpengChargingStations() {
         });
         markers = [];
         
-        // 等待地图完全渲染后再加载标记
-        setTimeout(() => {
-            // 强制地图重新计算尺寸和中心点
-            map.resize();
-            console.log('地图尺寸重新计算完成');
-            loadMarkers();
-        }, 500);
+        // 立即重新加载，不延迟
+        loadMarkers();
     } else {
         console.log('地图未初始化，无法刷新标记');
     }
