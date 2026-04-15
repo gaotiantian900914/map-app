@@ -242,12 +242,28 @@ function initMap() {
 
 // 加载标注
 function loadMarkers() {
+    console.log('开始加载标注...');
+    
+    // 确保地图已初始化
+    if (!map) {
+        console.log('地图未初始化，等待 500ms 后重试...');
+        setTimeout(loadMarkers, 500);
+        return;
+    }
+    
     const saved = localStorage.getItem('mapMarkers');
     if (saved) {
         const markerData = JSON.parse(saved);
         console.log('加载标注数据:', markerData.length, '个');
-        markerData.forEach(data => {
-            addMarkerToMap(data);
+        
+        markerData.forEach((data, index) => {
+            // 延迟添加每个标记，避免地图渲染问题
+            setTimeout(() => {
+                addMarkerToMap(data);
+                if (index === markerData.length - 1) {
+                    console.log('所有标记加载完成');
+                }
+            }, index * 50);
         });
     } else {
         console.log('没有保存的标注数据');
@@ -921,10 +937,23 @@ function batchAddIdealChargingStations() {
     
     localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
     
+    // 如果在地图页面，刷新地图标注
     if (map) {
-        markers.forEach(m => m.marker.setMap(null));
+        console.log('刷新地图上的标记...');
+        // 清除现有标记
+        markers.forEach(m => {
+            if (m.marker) {
+                m.marker.setMap(null);
+            }
+        });
         markers = [];
-        loadMarkers();
+        
+        // 重新加载所有标记（带延迟）
+        setTimeout(() => {
+            loadMarkers();
+        }, 300);
+    } else {
+        console.log('地图未初始化，无法刷新标记');
     }
     
     alert(`批量添加完成！\n成功添加：${addedCount} 个\n跳过重复：${skippedCount} 个`);
@@ -990,10 +1019,23 @@ function batchAddXpengChargingStations() {
     
     localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
     
+    // 如果在地图页面，刷新地图标注
     if (map) {
-        markers.forEach(m => m.marker.setMap(null));
+        console.log('刷新地图上的标记...');
+        // 清除现有标记
+        markers.forEach(m => {
+            if (m.marker) {
+                m.marker.setMap(null);
+            }
+        });
         markers = [];
-        loadMarkers();
+        
+        // 重新加载所有标记（带延迟）
+        setTimeout(() => {
+            loadMarkers();
+        }, 300);
+    } else {
+        console.log('地图未初始化，无法刷新标记');
     }
     
     alert(`批量添加完成！\n成功添加：${addedCount} 个\n跳过重复：${skippedCount} 个`);
