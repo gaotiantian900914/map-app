@@ -890,6 +890,9 @@ function batchAddIdealChargingStations() {
     const savedCategories = JSON.parse(localStorage.getItem('mapCategories') || '[]');
     let idealCategory = savedCategories.find(c => c.name === '理想充电站');
     
+    console.log('当前所有分类:', savedCategories);
+    console.log('查找到的理想充电站分类:', idealCategory);
+    
     if (!idealCategory) {
         idealCategory = {
             id: 'ideal_charging_' + Date.now(),
@@ -899,14 +902,28 @@ function batchAddIdealChargingStations() {
         };
         categories.push(idealCategory);
         saveCategories();
-        console.log('创建理想充电站分类:', idealCategory);
+        console.log('✓ 创建理想充电站分类:', idealCategory);
     } else {
-        console.log('使用已存在的理想充电站分类:', idealCategory);
+        // 检查颜色是否正确，如果不正确则更新
+        if (idealCategory.color !== '#FF9800') {
+            console.log('修正理想充电站分类颜色:', idealCategory.color, '->', '#FF9800');
+            idealCategory.color = '#FF9800';
+            // 更新 categories 数组
+            const index = categories.findIndex(c => c.id === idealCategory.id);
+            if (index !== -1) {
+                categories[index].color = '#FF9800';
+            }
+            saveCategories();
+        }
+        console.log('✓ 使用已存在的理想充电站分类:', idealCategory);
     }
     
     let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
     let addedCount = 0;
     let skippedCount = 0;
+    
+    console.log('现有标记数量:', allMarkers.length);
+    console.log('理想充电站数据:', IDEAL_CHARGING_STATIONS.length, '个');
     
     IDEAL_CHARGING_STATIONS.forEach(station => {
         const exists = allMarkers.some(m => 
@@ -934,6 +951,9 @@ function batchAddIdealChargingStations() {
             console.log('跳过已存在的充电站:', station.name);
         }
     });
+    
+    console.log('新标记总数:', addedCount);
+    console.log('跳过数量:', skippedCount);
     
     localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
     
