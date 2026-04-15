@@ -286,9 +286,16 @@ function addMarkerToMap(data) {
     
     console.log('=== 添加标记详情 ===');
     console.log('标记名称:', data.name);
+    console.log('标记坐标:', data.lat, data.lng);
     console.log('标记分类 ID:', data.category);
     console.log('查找到的分类:', categoryName);
     console.log('分类颜色代码:', categoryColor);
+    
+    // 验证坐标是否有效
+    if (isNaN(data.lat) || isNaN(data.lng)) {
+        console.error('无效坐标:', data.lat, data.lng);
+        return;
+    }
     
     // 根据分类颜色创建不同颜色的标记
     let markerIcon;
@@ -337,42 +344,47 @@ function addMarkerToMap(data) {
     }
     
     console.log('使用图标类型:', iconType);
-    console.log('图标对象:', markerIcon);
-    console.log('===================');
     
-    const marker = new AMap.Marker({
-        position: [data.lng, data.lat],
-        title: data.name,
-        icon: markerIcon,
-        animation: 'AMAP_ANIMATION_DROP'
-    });
-    
-    // 创建信息窗口内容
-    const infoContent = `
-        <div style="padding: 10px; min-width: 200px;">
-            <h4 style="margin: 0 0 10px 0; color: #333;">${data.name}</h4>
-            <p style="margin: 5px 0; color: #666; font-size: 12px;">
-                <strong>地址:</strong> ${data.address || '暂无'}
-            </p>
-            <p style="margin: 5px 0; color: #666; font-size: 12px;">
-                <strong>坐标:</strong> ${data.lat.toFixed(6)}, ${data.lng.toFixed(6)}
-            </p>
-            ${data.description ? `<p style="margin: 5px 0; color: #666; font-size: 12px;"><strong>备注:</strong> ${data.description}</p>` : ''}
-        </div>
-    `;
-    
-    const infoWindow = new AMap.InfoWindow({
-        content: infoContent,
-        offset: new AMap.Pixel(0, -30)
-    });
-    
-    marker.on('click', function() {
-        infoWindow.open(map, marker.getPosition());
-    });
-    
-    marker.setMap(map);
-    markers.push({ marker: marker, data: data });
-    console.log('✓ 标记添加成功:', data.name, '颜色:', iconType);
+    try {
+        const marker = new AMap.Marker({
+            position: [data.lng, data.lat],
+            title: data.name,
+            icon: markerIcon,
+            animation: 'AMAP_ANIMATION_DROP'
+        });
+        
+        // 创建信息窗口内容
+        const infoContent = `
+            <div style="padding: 10px; min-width: 200px;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">${data.name}</h4>
+                <p style="margin: 5px 0; color: #666; font-size: 12px;">
+                    <strong>地址:</strong> ${data.address || '暂无'}
+                </p>
+                <p style="margin: 5px 0; color: #666; font-size: 12px;">
+                    <strong>坐标:</strong> ${data.lat.toFixed(6)}, ${data.lng.toFixed(6)}
+                </p>
+                ${data.description ? `<p style="margin: 5px 0; color: #666; font-size: 12px;"><strong>备注:</strong> ${data.description}</p>` : ''}
+            </div>
+        `;
+        
+        const infoWindow = new AMap.InfoWindow({
+            content: infoContent,
+            offset: new AMap.Pixel(0, -30)
+        });
+        
+        marker.on('click', function() {
+            infoWindow.open(map, marker.getPosition());
+        });
+        
+        marker.setMap(map);
+        markers.push({ marker: marker, data: data });
+        
+        console.log('✓ 标记添加成功:', data.name, '颜色:', iconType);
+        console.log('标记位置:', marker.getPosition());
+    } catch (error) {
+        console.error('添加标记失败:', error);
+        console.error('标记数据:', data);
+    }
 }
 
 // ==================== 搜索功能 ====================
@@ -968,10 +980,13 @@ function batchAddIdealChargingStations() {
         });
         markers = [];
         
-        // 重新加载所有标记（带延迟）
+        // 等待地图完全渲染后再加载标记
         setTimeout(() => {
+            // 强制地图重新计算尺寸和中心点
+            map.resize();
+            console.log('地图尺寸重新计算完成');
             loadMarkers();
-        }, 300);
+        }, 500);
     } else {
         console.log('地图未初始化，无法刷新标记');
     }
@@ -1050,10 +1065,13 @@ function batchAddXpengChargingStations() {
         });
         markers = [];
         
-        // 重新加载所有标记（带延迟）
+        // 等待地图完全渲染后再加载标记
         setTimeout(() => {
+            // 强制地图重新计算尺寸和中心点
+            map.resize();
+            console.log('地图尺寸重新计算完成');
             loadMarkers();
-        }, 300);
+        }, 500);
     } else {
         console.log('地图未初始化，无法刷新标记');
     }
