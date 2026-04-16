@@ -181,7 +181,7 @@ function addMarkerToMap(data) {
     if (categoryName === '理想充电站') {
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png',
+            imageUrl: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png',
             imageSize: new AMap.Size(32, 32)
         });
     }
@@ -189,7 +189,7 @@ function addMarkerToMap(data) {
     else if (categoryName === '小鹏充电站') {
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+            imageUrl: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
             imageSize: new AMap.Size(32, 32)
         });
     }
@@ -197,36 +197,38 @@ function addMarkerToMap(data) {
     else if (categoryColor === '#FF9800' || categoryColor === '#FF5722') {
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png',
+            imageUrl: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else if (categoryColor === '#2196F3' || categoryColor === '#3366CC') {
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+            imageUrl: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else if (categoryColor === '#4CAF50') {
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png',
+            imageUrl: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else {
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+            imageUrl: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
             imageSize: new AMap.Size(32, 32)
         });
     }
     
     console.log('使用图标:', markerIcon);
+    console.log('图标图片 URL:', markerIcon.imageSrc);
     
     const marker = new AMap.Marker({
         position: [data.lng, data.lat],
         title: data.name,
         icon: markerIcon,
-        animation: 'AMAP_ANIMATION_DROP'
+        animation: 'AMAP_ANIMATION_DROP',
+        offset: new AMap.Pixel(-16, -32)
     });
     
     const infoContent = `
