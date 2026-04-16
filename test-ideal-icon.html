@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试理想图标</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-item { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>理想充电站图标测试</h1>
+    
+    <div class="test-item">
+        <h3>测试 1: 检查分类颜色</h3>
+        <button onclick="checkCategories()">查看当前分类</button>
+        <pre id="categoryInfo"></pre>
+    </div>
+    
+    <div class="test-item">
+        <h3>测试 2: 清除理想分类</h3>
+        <button onclick="clearIdealCategory()">清除理想充电站分类</button>
+        <p>清除后需要重新添加才能生效</p>
+    </div>
+    
+    <div class="test-item">
+        <h3>测试 3: 清除所有数据</h3>
+        <button onclick="clearAllData()" style="background: #f44336; color: white;">清除所有标记和分类</button>
+        <p style="color: #f44336;">警告：这将删除所有数据！</p>
+    </div>
+    
+    <div class="test-item">
+        <h3>测试 4: 图标 URL 测试</h3>
+        <p>红色图标：<img src="https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png" style="width: 32px; height: 32px;" /></p>
+        <p>蓝色图标：<img src="https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png" style="width: 32px; height: 32px;" /></p>
+        <p>绿色图标：<img src="https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png" style="width: 32px; height: 32px;" /></p>
+    </div>
+    
+    <script>
+        function checkCategories() {
+            const categories = JSON.parse(localStorage.getItem('mapCategories') || '[]');
+            const idealCategory = categories.find(c => c.name === '理想充电站');
+            
+            let info = '所有分类:\n' + JSON.stringify(categories, null, 2) + '\n\n';
+            if (idealCategory) {
+                info += '理想充电站分类:\n';
+                info += 'ID: ' + idealCategory.id + '\n';
+                info += '颜色：' + idealCategory.color + '\n';
+                info += '预期颜色：#FF5722 (红色)\n';
+                info += '颜色是否匹配：' + (idealCategory.color === '#FF5722' ? '✓ 是' : '✗ 否，需要清除后重新添加') + '\n';
+            } else {
+                info += '未找到理想充电站分类';
+            }
+            
+            document.getElementById('categoryInfo').textContent = info;
+        }
+        
+        function clearIdealCategory() {
+            const categories = JSON.parse(localStorage.getItem('mapCategories') || '[]');
+            const filtered = categories.filter(c => c.name !== '理想充电站');
+            localStorage.setItem('mapCategories', JSON.stringify(filtered));
+            alert('理想充电站分类已清除，请返回页面重新添加');
+            checkCategories();
+        }
+        
+        function clearAllData() {
+            if (confirm('确定要清除所有数据吗？此操作不可恢复！')) {
+                localStorage.removeItem('mapMarkers');
+                localStorage.removeItem('mapCategories');
+                alert('所有数据已清除，请刷新页面');
+            }
+        }
+    </script>
+</body>
+</html>

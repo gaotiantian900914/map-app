@@ -278,6 +278,11 @@ function batchAddIdealChargingStations() {
         savedCategories.push(idealCategory);
         localStorage.setItem('mapCategories', JSON.stringify(savedCategories));
         categories = savedCategories;
+    } else {
+        // 更新现有分类的颜色为红色
+        idealCategory.color = '#FF5722';
+        localStorage.setItem('mapCategories', JSON.stringify(savedCategories));
+        categories = savedCategories;
     }
     
     console.log('理想分类颜色:', idealCategory.color);
