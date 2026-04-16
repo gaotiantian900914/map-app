@@ -203,18 +203,20 @@ function addMarkerToMap(data) {
     
     console.log('使用图标路径:', iconPath);
     
+    // 创建自定义图标
+    const icon = new AMap.Icon({
+        size: new AMap.Size(32, 32),
+        image: iconPath,
+        imageSize: new AMap.Size(32, 32)
+    });
+    
     // 创建标记
     const marker = new AMap.Marker({
         map: map,
-        position: new AMap.LngLat(data.lng, data.lat),
+        position: [data.lng, data.lat],
         title: data.name,
-        icon: new AMap.Icon({
-            size: new AMap.Size(32, 32),
-            image: iconPath,
-            imageSize: new AMap.Size(32, 32)
-        }),
-        anchor: 'bottom-center',
-        animation: 'AMAP_ANIMATION_DROP'
+        icon: icon,
+        offset: new AMap.Pixel(-16, -32)
     });
     
     const infoContent = `
