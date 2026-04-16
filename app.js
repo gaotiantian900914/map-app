@@ -173,65 +173,46 @@ function addMarkerToMap(data) {
     
     console.log('添加标记:', data.name, '分类 ID:', data.category, '分类颜色:', categoryColor);
     
-    // 根据分类名称判断使用什么图标，而不是颜色
+    // 根据分类名称判断使用什么图标
     const categoryName = category ? category.name : '';
     console.log('分类名称:', categoryName);
-    let markerIcon;
+    
+    // 直接设置图标路径，不使用 AMap.Icon 对象
+    let iconPath;
     
     // 理想充电站使用红色图标
     if (categoryName === '理想充电站') {
         console.log('匹配到理想充电站，使用红色图标');
-        markerIcon = new AMap.Icon({
-            size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png',
-            imageSize: new AMap.Size(32, 32)
-        });
+        iconPath = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png';
     }
     // 小鹏充电站使用蓝色图标
     else if (categoryName === '小鹏充电站') {
         console.log('匹配到小鹏充电站，使用蓝色图标');
-        markerIcon = new AMap.Icon({
-            size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
-            imageSize: new AMap.Size(32, 32)
-        });
+        iconPath = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png';
     }
     // 其他分类根据颜色判断
     else if (categoryColor === '#FF9800' || categoryColor === '#FF5722') {
-        markerIcon = new AMap.Icon({
-            size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png',
-            imageSize: new AMap.Size(32, 32)
-        });
+        iconPath = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png';
     } else if (categoryColor === '#2196F3' || categoryColor === '#3366CC') {
-        markerIcon = new AMap.Icon({
-            size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
-            imageSize: new AMap.Size(32, 32)
-        });
+        iconPath = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png';
     } else if (categoryColor === '#4CAF50') {
-        markerIcon = new AMap.Icon({
-            size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png',
-            imageSize: new AMap.Size(32, 32)
-        });
+        iconPath = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png';
     } else {
-        markerIcon = new AMap.Icon({
-            size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
-            imageSize: new AMap.Size(32, 32)
-        });
+        iconPath = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png';
     }
     
-    console.log('使用图标:', markerIcon);
-    console.log('图标对象属性:', Object.keys(markerIcon));
+    console.log('使用图标路径:', iconPath);
     
     // 创建标记
     const marker = new AMap.Marker({
         map: map,
         position: new AMap.LngLat(data.lng, data.lat),
         title: data.name,
-        icon: markerIcon,
+        icon: new AMap.Icon({
+            size: new AMap.Size(32, 32),
+            image: iconPath,
+            imageSize: new AMap.Size(32, 32)
+        }),
         anchor: 'bottom-center',
         animation: 'AMAP_ANIMATION_DROP'
     });
@@ -347,7 +328,7 @@ function batchAddIdealChargingStations() {
         loadMarkers();
     }
     
-    alert(`批量添加完成！成功添加 ${addedCount} 个理想充电站`);
+    console.log(`批量添加完成！成功添加 ${addedCount} 个理想充电站`);
     updateCategoryList();
 }
 
@@ -403,13 +384,11 @@ function batchAddXpengChargingStations() {
         loadMarkers();
     }
     
-    alert(`批量添加完成！成功添加 ${addedCount} 个小鹏充电站`);
+    console.log(`批量添加完成！成功添加 ${addedCount} 个小鹏充电站`);
     updateCategoryList();
 }
 
 function clearAllData() {
-    if (!confirm('确定要清空所有数据吗？此操作不可恢复！')) return;
-    
     localStorage.removeItem('mapMarkers');
     localStorage.removeItem('mapCategories');
     
@@ -418,7 +397,7 @@ function clearAllData() {
     categories = [];
     initDefaultCategories();
     
-    alert('所有数据已清空！');
+    console.log('所有数据已清空！');
     location.reload();
 }
 
