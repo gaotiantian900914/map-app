@@ -171,14 +171,12 @@ function addMarkerToMap(data) {
                      (savedCategories.length > 0 ? savedCategories[0] : null);
     const categoryColor = category ? category.color : '#2196F3';
     
-    console.log('添加标记:', data.name, '分类颜色:', categoryColor);
-    
     let markerIcon;
     
-    if (categoryColor === '#FF9800' || categoryColor === '#FF5722') {
+    if (categoryColor === '#FF9800') {
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
-            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png',
+            image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_orange.png',
             imageSize: new AMap.Size(32, 32)
         });
     } else if (categoryColor === '#2196F3' || categoryColor === '#3366CC') {
@@ -272,15 +270,13 @@ function batchAddIdealChargingStations() {
         idealCategory = {
             id: 'ideal_charging_' + Date.now(),
             name: '理想充电站',
-            color: '#FF5722',
+            color: '#FF9800',
             isDefault: false
         };
         savedCategories.push(idealCategory);
         localStorage.setItem('mapCategories', JSON.stringify(savedCategories));
         categories = savedCategories;
     }
-    
-    console.log('理想分类颜色:', idealCategory.color);
     
     let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
     let addedCount = 0;
@@ -335,8 +331,6 @@ function batchAddXpengChargingStations() {
         localStorage.setItem('mapCategories', JSON.stringify(savedCategories));
         categories = savedCategories;
     }
-    
-    console.log('小鹏分类颜色:', xpengCategory.color);
     
     let allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
     let addedCount = 0;
