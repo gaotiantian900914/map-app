@@ -175,10 +175,12 @@ function addMarkerToMap(data) {
     
     // 根据分类名称判断使用什么图标，而不是颜色
     const categoryName = category ? category.name : '';
+    console.log('分类名称:', categoryName);
     let markerIcon;
     
     // 理想充电站使用红色图标
     if (categoryName === '理想充电站') {
+        console.log('匹配到理想充电站，使用红色图标');
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             imageUrl: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_red.png',
@@ -187,6 +189,7 @@ function addMarkerToMap(data) {
     }
     // 小鹏充电站使用蓝色图标
     else if (categoryName === '小鹏充电站') {
+        console.log('匹配到小鹏充电站，使用蓝色图标');
         markerIcon = new AMap.Icon({
             size: new AMap.Size(32, 32),
             imageUrl: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
