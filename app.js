@@ -226,12 +226,14 @@ function addMarkerToMap(data) {
     console.log('使用图标:', markerIcon);
     console.log('图标对象属性:', Object.keys(markerIcon));
     
+    // 创建标记
     const marker = new AMap.Marker({
-        position: [data.lng, data.lat],
+        map: map,
+        position: new AMap.LngLat(data.lng, data.lat),
         title: data.name,
         icon: markerIcon,
-        animation: 'AMAP_ANIMATION_DROP',
-        offset: new AMap.Pixel(-16, -32)
+        anchor: 'bottom-center',
+        animation: 'AMAP_ANIMATION_DROP'
     });
     
     const infoContent = `
