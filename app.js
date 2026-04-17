@@ -178,36 +178,37 @@ function addMarkerToMap(data) {
     console.log('分类名称:', category ? category.name : '未找到');
     console.log('分类颜色:', categoryColor);
     
-    // 使用 SVG Data URL 创建不同颜色的图标
-    let iconSvg;
+    // 根据分类名称判断使用什么图标
+    // 使用高德地图支持的图标 URL
+    let iconUrl;
     
     // 理想充电站使用红色图标
     if (category && category.name === '理想充电站') {
         console.log('✓ 匹配到理想充电站，使用红色图标');
-        iconSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%23FF5722" stroke="%23FFFFFF" stroke-width="2"/></svg>');
+        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png';
     }
     // 小鹏充电站使用蓝色图标
     else if (category && category.name === '小鹏充电站') {
         console.log('✓ 匹配到小鹏充电站，使用蓝色图标');
-        iconSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%232196F3" stroke="%23FFFFFF" stroke-width="2"/></svg>');
+        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png';
     }
     // 其他分类根据颜色判断
     else if (categoryColor === '#FF9800' || categoryColor === '#FF5722') {
-        iconSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%23FF5722" stroke="%23FFFFFF" stroke-width="2"/></svg>');
+        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png';
     } else if (categoryColor === '#2196F3' || categoryColor === '#3366CC') {
-        iconSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%232196F3" stroke="%23FFFFFF" stroke-width="2"/></svg>');
+        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png';
     } else if (categoryColor === '#4CAF50') {
-        iconSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%234CAF50" stroke="%23FFFFFF" stroke-width="2"/></svg>');
+        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png';
     } else {
-        iconSvg = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="%232196F3" stroke="%23FFFFFF" stroke-width="2"/></svg>');
+        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png';
     }
     
-    console.log('使用图标:', iconSvg.substring(0, 60) + '...');
+    console.log('使用图标 URL:', iconUrl);
     
     // 创建自定义图标
     const icon = new AMap.Icon({
         size: new AMap.Size(32, 32),
-        image: iconSvg,
+        image: iconUrl,
         imageSize: new AMap.Size(32, 32)
     });
     
