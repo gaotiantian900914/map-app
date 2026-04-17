@@ -532,29 +532,6 @@
                 <div id="searchResults" class="search-results"></div>
             </div>
 
-            <!-- 分类管理 -->
-            <div class="section">
-                <div class="section-title">
-                    <span class="icon">🏷️</span>
-                    分类管理
-                </div>
-                <div class="category-manager">
-                    <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <h4 style="margin: 0 0 15px 0; color: #333; font-size: 14px; font-weight: 600;">添加新分类</h4>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="newCategoryName" placeholder="输入分类名称" style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: all 0.3s;">
-                            <input type="color" id="newCategoryColor" value="#2196F3" title="选择颜色" style="width: 60px; height: 40px; padding: 2px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; background: white;">
-                            <button onclick="addCategory()" style="padding: 12px 20px; background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.3s;">
-                                添加
-                            </button>
-                        </div>
-                    </div>
-                    <div id="categoryList" class="category-list">
-                        <!-- 动态生成分类列表 -->
-                    </div>
-                </div>
-            </div>
-
             <!-- 标注表单 -->
             <div class="section">
                 <div class="section-title">
@@ -638,7 +615,7 @@
     <!-- 高德地图 API -->
     <script src="https://webapi.amap.com/maps?v=1.4.15&key=9b110f6d6acaf2e12af4a985617579ff"></script>
     <!-- 添加版本号避免缓存 -->
-    <script src="app.js?v=39"></script>
+    <script src="app.js?v=41"></script>
     <script>
         // 页面加载完成后初始化
         window.addEventListener('load', function() {
