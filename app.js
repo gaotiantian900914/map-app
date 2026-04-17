@@ -332,6 +332,117 @@ function switchTab(tab) {
     }
 }
 
+// ==================== 辅助功能函数 ====================
+
+function searchPlace() {
+    const keyword = document.getElementById('placeSearchInput').value.trim();
+    if (!keyword) {
+        document.getElementById('placeSearchInput').focus();
+        document.getElementById('placeSearchInput').style.borderColor = '#f44336';
+        setTimeout(function() {
+            document.getElementById('placeSearchInput').style.borderColor = '#e0e0e0';
+        }, 2000);
+        return;
+    }
+    
+    console.log('正在搜索:', keyword);
+    
+    // 使用高德地图地理编码搜索
+    AMap.plugin('AMap.Geocoder', function() {
+        const geocoder = new AMap.Geocoder({
+            city: '全国'
+        });
+        
+        geocoder.getLocation(keyword, function(status, result) {
+            if (status === 'complete' && result.geocodes.length) {
+                const location = result.geocodes[0].location;
+                console.log('搜索结果:', location);
+                if (map) {
+                    map.setCenter([location.getLng(), location.getLat()]);
+                    map.setZoom(16);
+                }
+            } else {
+                console.log('未找到该地点');
+            }
+        });
+    });
+}
+
+function locateMe() {
+    console.log('定位我的位置...');
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            console.log('当前位置:', lat, lng);
+            if (map) {
+                map.setCenter([lng, lat]);
+                map.setZoom(15);
+            }
+        }, function(error) {
+            console.log('获取位置失败:', error.message);
+        });
+    } else {
+        console.log('浏览器不支持地理定位');
+    }
+}
+
+function searchNearby() {
+    const radius = document.getElementById('searchRadius').value;
+    console.log('搜索附近标注，半径:', radius, '米');
+}
+
+function clearAllMarkers() {
+    if (!confirm('确定要清空所有标注吗？')) return;
+    
+    localStorage.removeItem('mapMarkers');
+    markers.forEach(m => m.marker.setMap(null));
+    markers = [];
+    renderCategoryTable();
+    console.log('已清空所有标注');
+}
+
+function exportMarkers() {
+    const allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
+    const dataStr = JSON.stringify(allMarkers, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'markers_' + new Date().getTime() + '.json';
+    link.click();
+    console.log('已导出标注数据');
+}
+
+function refreshMarkers() {
+    if (!map) return;
+    markers.forEach(m => m.marker.setMap(null));
+    markers = [];
+    loadMarkers();
+    renderCategoryTable();
+    console.log('已刷新标注');
+}
+
+function batchDeleteMarkers() {
+    console.log('批量删除标注');
+}
+
+function toggleSelectAll() {
+    console.log('全选/取消全选');
+}
+
+function filterTableByCategory() {
+    console.log('按分类筛选表格');
+}
+
+function filterTableBySearch() {
+    console.log('按关键词筛选表格');
+}
+
+function showStatus(message, type) {
+    console.log('状态:', message, type);
+}
+
 // ==================== 地图初始化 ====================
 
 function initMap() {
