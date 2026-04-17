@@ -58,11 +58,7 @@ function updateCategoryList() {
 function deleteCategory(categoryId) {
     const category = categories.find(c => c.id === categoryId);
     if (category && category.isDefault) {
-        alert('默认分类不能删除');
-        return;
-    }
-    
-    if (!confirm('确定要删除这个分类吗？')) {
+        console.log('默认分类不能删除');
         return;
     }
     
@@ -77,7 +73,230 @@ function deleteCategory(categoryId) {
     categories = categories.filter(c => c.id !== categoryId);
     saveCategories();
     updateCategoryList();
-    alert('分类删除成功');
+    renderCategoryTable();
+    console.log('分类删除成功');
+}
+
+// ==================== 新版分类管理功能 ====================
+
+function renderCategoryTable() {
+    const tbody = document.getElementById('categoryTableBody');
+    const emptyState = document.getElementById('categoryEmptyState');
+    
+    if (!tbody) return;
+    
+    const searchText = (document.getElementById('categorySearchInput') || {}).value || '';
+    const colorFilter = (document.getElementById('categoryColorFilter') || {}).value || '';
+    
+    let filteredCategories = categories.filter(cat => {
+        const matchName = !searchText || cat.name.toLowerCase().includes(searchText.toLowerCase());
+        const matchColor = !colorFilter || cat.color === colorFilter;
+        return matchName && matchColor;
+    });
+    
+    if (filteredCategories.length === 0) {
+        tbody.innerHTML = '';
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+    }
+    
+    if (emptyState) emptyState.style.display = 'none';
+    
+    const allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
+    
+    tbody.innerHTML = filteredCategories.map(cat => {
+        const count = allMarkers.filter(m => m.category === cat.id || (cat.id === 'default' && !m.category)).length;
+        const createdTime = cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : '-';
+        
+        return `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 15px;">
+                    <span style="width: 32px; height: 32px; background: ${cat.color}; border-radius: 50%; display: inline-block; border: 2px solid ${cat.color};"></span>
+                </td>
+                <td style="padding: 15px; font-weight: 500; color: ${cat.color};">${cat.name}</td>
+                <td style="padding: 15px; color: #666;">${cat.color}</td>
+                <td style="padding: 15px;">${count} 个标注</td>
+                <td style="padding: 15px; color: #999;">${createdTime}</td>
+                <td style="padding: 15px; text-align: center;">
+                    <button onclick="editCategory('${cat.id}')" style="padding: 6px 12px; margin-right: 5px; border: none; background: #2196F3; color: white; border-radius: 4px; cursor: pointer; font-size: 12px;">编辑</button>
+                    ${!cat.isDefault ? `<button onclick="deleteCategoryById('${cat.id}')" style="padding: 6px 12px; border: none; background: #f44336; color: white; border-radius: 4px; cursor: pointer; font-size: 12px;">删除</button>` : '<span style="color: #999; font-size: 12px;">默认</span>'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function filterCategories() {
+    renderCategoryTable();
+}
+
+function openCategoryModal(categoryId = null) {
+    const modal = document.getElementById('categoryModal');
+    const title = document.getElementById('categoryModalTitle');
+    const nameInput = document.getElementById('categoryNameInput');
+    const editId = document.getElementById('editCategoryId');
+    
+    // 重置表单
+    nameInput.value = '';
+    editId.value = '';
+    
+    // 清除之前的选择样式
+    document.querySelectorAll('#categoryModal label').forEach(label => {
+        label.style.border = '2px solid #e0e0e0';
+    });
+    
+    if (categoryId) {
+        // 编辑模式
+        const category = categories.find(c => c.id === categoryId);
+        if (category) {
+            title.textContent = '✏️ 编辑分类';
+            nameInput.value = category.name;
+            editId.value = category.id;
+            
+            // 选中当前颜色
+            const colorRadio = document.querySelector(`input[name="categoryColor"][value="${category.color}"]`);
+            if (colorRadio) {
+                colorRadio.checked = true;
+                colorRadio.parentElement.style.border = '2px solid #667eea';
+            }
+        }
+    } else {
+        // 新增模式
+        title.textContent = '➕ 新增分类';
+        // 默认选中蓝色
+        const colorRadio = document.querySelector(`input[name="categoryColor"][value="#2196F3"]`);
+        if (colorRadio) {
+            colorRadio.checked = true;
+            colorRadio.parentElement.style.border = '2px solid #667eea';
+        }
+    }
+    
+    modal.style.display = 'flex';
+    nameInput.focus();
+}
+
+function closeCategoryModal() {
+    const modal = document.getElementById('categoryModal');
+    modal.style.display = 'none';
+}
+
+function selectColor(color, element) {
+    // 清除所有选中样式
+    document.querySelectorAll('#categoryModal label').forEach(label => {
+        label.style.border = '2px solid #e0e0e0';
+    });
+    // 选中当前颜色
+    element.style.border = '2px solid #667eea';
+    // 选中单选框
+    const radio = element.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
+}
+
+function saveCategory() {
+    const nameInput = document.getElementById('categoryNameInput');
+    const editId = document.getElementById('editCategoryId');
+    const name = nameInput.value.trim();
+    
+    if (!name) {
+        nameInput.focus();
+        nameInput.style.borderColor = '#f44336';
+        return;
+    }
+    
+    const selectedColor = document.querySelector('input[name="categoryColor"]:checked');
+    const color = selectedColor ? selectedColor.value : '#2196F3';
+    
+    if (editId.value) {
+        // 编辑现有分类
+        const category = categories.find(c => c.id === editId.value);
+        if (category) {
+            category.name = name;
+            category.color = color;
+            saveCategories();
+            console.log('分类更新成功:', category.name);
+        }
+    } else {
+        // 新增分类
+        const newCategory = {
+            id: 'category_' + Date.now(),
+            name: name,
+            color: color,
+            isDefault: false,
+            createdAt: new Date().toISOString()
+        };
+        categories.push(newCategory);
+        saveCategories();
+        console.log('分类添加成功:', newCategory.name);
+    }
+    
+    closeCategoryModal();
+    renderCategoryTable();
+    updateCategoryFilter();
+    if (typeof refreshMarkers === 'function') refreshMarkers();
+    if (typeof initMap === 'function' && map) {
+        markers.forEach(m => m.marker.setMap(null));
+        markers = [];
+        loadMarkers();
+    }
+}
+
+function editCategory(categoryId) {
+    openCategoryModal(categoryId);
+}
+
+function deleteCategoryById(categoryId) {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+    
+    if (category.isDefault) {
+        console.log('默认分类不能删除');
+        return;
+    }
+    
+    if (!confirm(`确定要删除分类"${category.name}"吗？\n\n该分类下的所有标注将被移动到默认分类。`)) {
+        return;
+    }
+    
+    // 将该分类下的标注移动到默认分类
+    const allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
+    allMarkers.forEach(marker => {
+        if (marker.category === categoryId) {
+            marker.category = 'default';
+        }
+    });
+    localStorage.setItem('mapMarkers', JSON.stringify(allMarkers));
+    
+    // 删除分类
+    categories = categories.filter(c => c.id !== categoryId);
+    saveCategories();
+    
+    renderCategoryTable();
+    updateCategoryFilter();
+    console.log('分类删除成功');
+    
+    // 刷新地图标记
+    if (typeof initMap === 'function' && map) {
+        markers.forEach(m => m.marker.setMap(null));
+        markers = [];
+        loadMarkers();
+    }
+}
+
+function updateCategoryFilter() {
+    const filterSelect = document.getElementById('categoryFilter');
+    if (!filterSelect) return;
+    
+    const currentValue = filterSelect.value;
+    filterSelect.innerHTML = '<option value="all">全部类型</option>';
+    
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        filterSelect.appendChild(option);
+    });
+    
+    filterSelect.value = currentValue;
 }
 
 // ==================== Tab 切换功能 ====================
@@ -103,6 +322,7 @@ function switchTab(tab) {
             document.getElementById('categoryView').style.display = 'block';
             tabItems[2].classList.add('active');
             updateCategoryList();
+            renderCategoryTable();
             break;
         case 'table':
             document.getElementById('tableView').style.display = 'flex';
