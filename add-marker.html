@@ -615,7 +615,7 @@
     <!-- 高德地图 API -->
     <script src="https://webapi.amap.com/maps?v=1.4.15&key=9b110f6d6acaf2e12af4a985617579ff"></script>
     <!-- 添加版本号避免缓存 -->
-    <script src="app.js?v=43"></script>
+    <script src="app.js?v=44"></script>
     <script>
         // 页面加载完成后初始化
         window.addEventListener('load', function() {
@@ -704,21 +704,28 @@
                 showStatus('请输入搜索关键词', 'error');
                 return;
             }
-
-            const url = 'https://restapi.amap.com/v3/place/text?key=4214ffb1464f3d9ffd569072100f3f3e&keywords=' + encodeURIComponent(keyword) + '&city=深圳&offset=10&page=1&extensions=all';
-
-            fetch(url)
-                .then(function(response) { return response.json(); })
-                .then(function(data) {
-                    if (data.status === '1' && data.pois && data.pois.length > 0) {
-                        displaySearchResults(data.pois);
+            
+            showStatus('正在搜索...', 'info');
+            
+            // 使用高德地图 JavaScript API 的 PlaceSearch 插件
+            AMap.plugin('AMap.PlaceSearch', function() {
+                const placeSearch = new AMap.PlaceSearch({
+                    city: '深圳',
+                    citylimit: false,
+                    pageSize: 10,
+                    pageIndex: 1,
+                    extensions: 'all'
+                });
+                
+                placeSearch.search(keyword, function(status, result) {
+                    if (status === 'complete' && result.poiList && result.poiList.pois) {
+                        displaySearchResults(result.poiList.pois);
+                        showStatus('找到 ' + result.poiList.pois.length + ' 个结果', 'success');
                     } else {
                         showStatus('未找到相关地点', 'error');
                     }
-                })
-                .catch(function(error) {
-                    showStatus('搜索失败：' + error.message, 'error');
                 });
+            });
         }
 
         // 显示搜索结果
