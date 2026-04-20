@@ -431,18 +431,26 @@
             display: none;
         }
 
+        .status-message.show {
+            display: block;
+        }
+
         .status-message.success {
             background: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
-            display: block;
         }
 
         .status-message.error {
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
-            display: block;
+        }
+
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
 
         /* 右侧地图 */
@@ -615,7 +623,7 @@
     <!-- 高德地图 API -->
     <script src="https://webapi.amap.com/maps?v=1.4.15&key=9b110f6d6acaf2e12af4a985617579ff"></script>
     <!-- 添加版本号避免缓存 -->
-    <script src="app.js?v=44"></script>
+    <script src="app.js?v=45"></script>
     <script>
         // 页面加载完成后初始化
         window.addEventListener('load', function() {
@@ -928,7 +936,7 @@
             const statusDiv = document.getElementById('statusMessage');
             if (statusDiv) {
                 statusDiv.textContent = message;
-                statusDiv.className = 'status-message ' + type;
+                statusDiv.className = 'status-message ' + type + ' show';
 
                 setTimeout(function() {
                     statusDiv.className = 'status-message';
