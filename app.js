@@ -463,8 +463,74 @@ function locateMe() {
 }
 
 function searchNearby() {
-    const radius = document.getElementById('searchRadius').value;
-    console.log('搜索附近标注，半径:', radius, '米');
+    if (!map) return;
+    
+    const radius = parseInt(document.getElementById('searchRadius').value) || 1000;
+    const center = map.getCenter();
+    const centerLng = center.lng;
+    const centerLat = center.lat;
+    
+    var allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
+    var results = [];
+    
+    allMarkers.forEach(function(marker) {
+        var distance = getDistance(centerLat, centerLng, marker.lat, marker.lng);
+        if (distance <= radius) {
+            results.push({
+                marker: marker,
+                distance: Math.round(distance)
+            });
+        }
+    });
+    
+    results.sort(function(a, b) {
+        return a.distance - b.distance;
+    });
+    
+    var resultsDiv = document.getElementById('searchResults');
+    if (!resultsDiv) return;
+    
+    if (results.length === 0) {
+        resultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">附近 ' + radius + ' 米内没有找到标注</div>';
+        return;
+    }
+    
+    var html = '<div style="padding: 10px; background: #e8f5e9; border-radius: 8px; margin-bottom: 10px; color: #2e7d32; font-size: 13px;">🎯 找到 ' + results.length + ' 个标注（半径 ' + radius + ' 米内）</div>';
+    
+    results.forEach(function(item, index) {
+        var m = item.marker;
+        var savedCategories = JSON.parse(localStorage.getItem('mapCategories') || '[]');
+        var cat = savedCategories.find(function(c) { return c.id === (m.category || 'default'); });
+        var catName = cat ? cat.name : '未分类';
+        var catColor = cat ? cat.color : '#999';
+        
+        html += '<div class="result-item" onclick="panToMarker(' + m.lat + ', ' + m.lng + ')" style="cursor: pointer;">' +
+            '<h4>' + (index + 1) + '. ' + m.name + '</h4>' +
+            '<p>📍 ' + (m.address || '暂无地址') + '</p>' +
+            '<p><span class="distance">📏 ' + item.distance + ' 米</span>' +
+            '<span class="marker-category-badge" style="background: ' + catColor + '; margin-left: 8px;">' + catName + '</span></p>' +
+            '</div>';
+    });
+    
+    resultsDiv.innerHTML = html;
+}
+
+function panToMarker(lat, lng) {
+    if (map) {
+        map.setCenter([lng, lat]);
+        map.setZoom(17);
+    }
+}
+
+function getDistance(lat1, lng1, lat2, lng2) {
+    var R = 6371000;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLng = (lng2 - lng1) * Math.PI / 180;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
 }
 
 function clearAllMarkers() {
@@ -742,8 +808,7 @@ function batchAddIdealChargingStations() {
     
     var isAddMarkerPage = window.location.pathname.includes('add-marker');
     if (isAddMarkerPage) {
-        alert('成功添加 ' + addedCount + ' 个理想充电站！即将返回地图视图');
-        window.location.href = 'index.html';
+        alert('成功添加 ' + addedCount + ' 个理想充电站！点击"返回"按钮查看地图');
     }
 }
 
@@ -804,8 +869,7 @@ function batchAddXpengChargingStations() {
     
     var isAddMarkerPage = window.location.pathname.includes('add-marker');
     if (isAddMarkerPage) {
-        alert('成功添加 ' + addedCount + ' 个小鹏充电站！即将返回地图视图');
-        window.location.href = 'index.html';
+        alert('成功添加 ' + addedCount + ' 个小鹏充电站！点击"返回"按钮查看地图');
     }
 }
 
