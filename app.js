@@ -347,43 +347,103 @@ function searchPlace() {
     
     console.log('正在搜索:', keyword);
     
-    // 使用高德地图地理编码搜索
-    AMap.plugin('AMap.Geocoder', function() {
-        const geocoder = new AMap.Geocoder({
-            city: '全国'
-        });
+    var statusDiv = document.getElementById('locationStatus');
+    if (statusDiv) statusDiv.innerHTML = '<p style="color: #2196F3;">正在搜索...</p>';
+    
+    var url = 'https://restapi.amap.com/v3/place/text?key=4214ffb1464f3d9ffd569072100f3f3e&keywords=' + encodeURIComponent(keyword) + '&city=深圳&offset=10&page=1&extensions=all';
+    
+    var script = document.createElement('script');
+    script.src = url + '&callback=handleSearchResult';
+    document.head.appendChild(script);
+    document.head.removeChild(script);
+}
+
+function handleSearchResult(data) {
+    var statusDiv = document.getElementById('locationStatus');
+    var resultsDiv = document.getElementById('placeSearchResults');
+    
+    if (data.status === '1' && data.pois && data.pois.length > 0) {
+        var poi = data.pois[0];
+        var location = poi.location.split(',');
+        var lng = parseFloat(location[0]);
+        var lat = parseFloat(location[1]);
         
-        geocoder.getLocation(keyword, function(status, result) {
-            if (status === 'complete' && result.geocodes.length) {
-                const location = result.geocodes[0].location;
-                console.log('搜索结果:', location);
-                if (map) {
-                    map.setCenter([location.getLng(), location.getLat()]);
-                    map.setZoom(16);
-                }
-            } else {
-                console.log('未找到该地点');
-            }
+        console.log('搜索结果:', poi.name, lng, lat);
+        
+        if (map) {
+            map.setCenter([lng, lat]);
+            map.setZoom(16);
+            
+            var marker = new AMap.Marker({
+                map: map,
+                position: [lng, lat],
+                title: poi.name
+            });
+            markers.push({ marker: marker, data: { name: poi.name, lat: lat, lng: lng } });
+        }
+        
+        if (resultsDiv) {
+            var html = '';
+            data.pois.forEach(function(p, index) {
+                var loc = p.location.split(',');
+                var pLng = parseFloat(loc[0]);
+                var pLat = parseFloat(loc[1]);
+                html += '<div style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;" onclick="selectSearchResult(' + pLng + ', ' + pLat + ', \'' + p.name.replace(/'/g, "\\'") + '\')">' +
+                    '<h4 style="margin: 0; font-size: 14px;">' + (index + 1) + '. ' + p.name + '</h4>' +
+                    '<p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">' + (p.address || '暂无地址') + '</p>' +
+                    '</div>';
+            });
+            resultsDiv.innerHTML = html;
+        }
+        
+        if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">找到 ' + data.pois.length + ' 个结果</p>';
+    } else {
+        console.log('未找到相关地点');
+        if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">未找到相关地点</p>';
+    }
+}
+
+function selectSearchResult(lng, lat, name) {
+    if (map) {
+        map.setCenter([lng, lat]);
+        map.setZoom(17);
+        
+        var marker = new AMap.Marker({
+            map: map,
+            position: [lng, lat],
+            title: name
         });
-    });
+        markers.push({ marker: marker, data: { name: name, lat: lat, lng: lng } });
+    }
 }
 
 function locateMe() {
-    console.log('定位我的位置...');
+    var statusDiv = document.getElementById('locationStatus');
+    if (statusDiv) statusDiv.innerHTML = '<p style="color: #2196F3;">正在定位...</p>';
+    
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
+            var lat = position.coords.latitude;
+            var lng = position.coords.longitude;
             console.log('当前位置:', lat, lng);
             if (map) {
                 map.setCenter([lng, lat]);
                 map.setZoom(15);
+                
+                var marker = new AMap.Marker({
+                    map: map,
+                    position: [lng, lat],
+                    title: '我的位置'
+                });
+                markers.push({ marker: marker, data: { name: '我的位置', lat: lat, lng: lng } });
             }
+            if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">定位成功</p>';
         }, function(error) {
             console.log('获取位置失败:', error.message);
+            if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：' + error.message + '</p>';
         });
     } else {
-        console.log('浏览器不支持地理定位');
+        if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">浏览器不支持地理定位</p>';
     }
 }
 
