@@ -808,7 +808,8 @@ function batchAddIdealChargingStations() {
     
     var isAddMarkerPage = window.location.pathname.includes('add-marker');
     if (isAddMarkerPage) {
-        alert('成功添加 ' + addedCount + ' 个理想充电站！点击"返回"按钮查看地图');
+        alert('成功添加 ' + addedCount + ' 个理想充电站！');
+        window.location.href = 'index.html';
     }
 }
 
@@ -869,7 +870,8 @@ function batchAddXpengChargingStations() {
     
     var isAddMarkerPage = window.location.pathname.includes('add-marker');
     if (isAddMarkerPage) {
-        alert('成功添加 ' + addedCount + ' 个小鹏充电站！点击"返回"按钮查看地图');
+        alert('成功添加 ' + addedCount + ' 个小鹏充电站！');
+        window.location.href = 'index.html';
     }
 }
 
