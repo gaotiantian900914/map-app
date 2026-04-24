@@ -358,6 +358,8 @@ function searchPlace() {
     document.head.removeChild(script);
 }
 
+let searchTempMarker = null;
+
 function handleSearchResult(data) {
     var statusDiv = document.getElementById('locationStatus');
     var resultsDiv = document.getElementById('placeSearchResults');
@@ -374,12 +376,9 @@ function handleSearchResult(data) {
             map.setCenter([lng, lat]);
             map.setZoom(16);
             
-            var marker = new AMap.Marker({
-                map: map,
-                position: [lng, lat],
-                title: poi.name
-            });
-            markers.push({ marker: marker, data: { name: poi.name, lat: lat, lng: lng } });
+            if (searchTempMarker) {
+                searchTempMarker.setMap(null);
+            }
         }
         
         if (resultsDiv) {
@@ -388,7 +387,7 @@ function handleSearchResult(data) {
                 var loc = p.location.split(',');
                 var pLng = parseFloat(loc[0]);
                 var pLat = parseFloat(loc[1]);
-                html += '<div style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;" onclick="selectSearchResult(' + pLng + ', ' + pLat + ', \'' + p.name.replace(/'/g, "\\'") + '\')">' +
+                html += '<div style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background=\'#f0f0f0\'" onmouseout="this.style.background=\'white\'" onclick="selectSearchResult(' + pLng + ', ' + pLat + ', \'' + p.name.replace(/'/g, "\\'") + '\')">' +
                     '<h4 style="margin: 0; font-size: 14px;">' + (index + 1) + '. ' + p.name + '</h4>' +
                     '<p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">' + (p.address || '暂无地址') + '</p>' +
                     '</div>';
@@ -396,7 +395,7 @@ function handleSearchResult(data) {
             resultsDiv.innerHTML = html;
         }
         
-        if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">找到 ' + data.pois.length + ' 个结果</p>';
+        if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">找到 ' + data.pois.length + ' 个结果，点击选择要标注的位置</p>';
     } else {
         console.log('未找到相关地点');
         if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">未找到相关地点</p>';
@@ -408,12 +407,28 @@ function selectSearchResult(lng, lat, name) {
         map.setCenter([lng, lat]);
         map.setZoom(17);
         
-        var marker = new AMap.Marker({
+        if (searchTempMarker) {
+            searchTempMarker.setMap(null);
+        }
+        
+        searchTempMarker = new AMap.Marker({
             map: map,
             position: [lng, lat],
-            title: name
+            title: name,
+            offset: new AMap.Pixel(-16, -32)
         });
-        markers.push({ marker: marker, data: { name: name, lat: lat, lng: lng } });
+        
+        var infoContent = '<div style="padding: 8px; min-width: 150px;">' +
+            '<h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px;">' + name + '</h4>' +
+            '<p style="margin: 0; color: #999; font-size: 12px;">点击"添加标注"保存此位置</p>' +
+            '</div>';
+        
+        var infoWindow = new AMap.InfoWindow({
+            content: infoContent,
+            offset: new AMap.Pixel(0, -30)
+        });
+        
+        infoWindow.open(map, searchTempMarker.getPosition());
     }
 }
 
