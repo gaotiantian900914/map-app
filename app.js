@@ -698,7 +698,6 @@ function batchAddIdealChargingStations() {
         localStorage.setItem('mapCategories', JSON.stringify(savedCategories));
         categories = savedCategories;
     } else {
-        // 更新现有分类的颜色为红色
         idealCategory.color = '#FF5722';
         localStorage.setItem('mapCategories', JSON.stringify(savedCategories));
         categories = savedCategories;
@@ -740,6 +739,12 @@ function batchAddIdealChargingStations() {
     
     console.log(`批量添加完成！成功添加 ${addedCount} 个理想充电站`);
     updateCategoryList();
+    
+    var isAddMarkerPage = window.location.pathname.includes('add-marker');
+    if (isAddMarkerPage) {
+        alert('成功添加 ' + addedCount + ' 个理想充电站！即将返回地图视图');
+        window.location.href = 'index.html';
+    }
 }
 
 function batchAddXpengChargingStations() {
@@ -796,6 +801,12 @@ function batchAddXpengChargingStations() {
     
     console.log(`批量添加完成！成功添加 ${addedCount} 个小鹏充电站`);
     updateCategoryList();
+    
+    var isAddMarkerPage = window.location.pathname.includes('add-marker');
+    if (isAddMarkerPage) {
+        alert('成功添加 ' + addedCount + ' 个小鹏充电站！即将返回地图视图');
+        window.location.href = 'index.html';
+    }
 }
 
 function clearAllData() {
