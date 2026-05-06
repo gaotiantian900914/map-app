@@ -121,32 +121,36 @@ export function showNearbyResults(nearbyMarkers, radius, getCategoryName, getCat
 export function renderMarkersTable(markers, getCategoryName, getCategoryColor) {
     const tbody = document.getElementById('markersTableBody');
     const noMsg = document.getElementById('noMarkersMessage');
+    const tableContent = tbody ? tbody.closest('.table-content') : null;
 
     if (!tbody) return;
 
     if (!markers || markers.length === 0) {
         tbody.innerHTML = '';
         if (noMsg) noMsg.style.display = 'block';
+        if (tableContent) tableContent.style.display = 'none';
         return;
     }
 
     if (noMsg) noMsg.style.display = 'none';
+    if (tableContent) tableContent.style.display = '';
 
     tbody.innerHTML = markers.map(function(marker, index) {
         const categoryName = getCategoryName(marker.categoryId);
         const categoryColor = getColorValue(getCategoryColor(marker.categoryId));
 
-        return '<tr>' +
-            '<td style="text-align: center;"><input type="checkbox" class="marker-checkbox" data-id="' + escapeHtml(marker.id) + '" style="width: 18px; height: 18px; cursor: pointer;"></td>' +
-            '<td>' + (index + 1) + '</td>' +
-            '<td>' + escapeHtml(marker.name) + '</td>' +
-            '<td><span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; color: white; background: ' + categoryColor + ';">' + escapeHtml(categoryName) + '</span></td>' +
-            '<td>' + escapeHtml(marker.description || '-') + '</td>' +
-            '<td style="font-size: 11px;">' + marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6) + '</td>' +
-            '<td style="font-size: 11px; color: #999;">' + escapeHtml(marker.createdAt || '-') + '</td>' +
-            '<td><div class="action-btns">' +
-                '<button class="btn-view" onclick="window.focusOnMarker(' + marker.lng + ', ' + marker.lat + ', \'' + escapeHtml(marker.id) + '\')">查看</button>' +
-                '<button class="btn-delete-small" onclick="window.deleteMarker(\'' + escapeHtml(marker.id) + '\')">删除</button>' +
+        return '<tr style="border-bottom: 1px solid #f0f0f0; transition: background 0.2s;" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'white\'">' +
+            '<td style="text-align: center; padding: 12px 8px;"><input type="checkbox" class="marker-checkbox" data-id="' + escapeHtml(marker.id) + '" style="width: 16px; height: 16px; cursor: pointer;"></td>' +
+            '<td style="padding: 12px 8px; color: #999; font-size: 12px; text-align: center;">' + (index + 1) + '</td>' +
+            '<td style="padding: 12px 8px; font-weight: 500; color: #333;">' + escapeHtml(marker.name) + '</td>' +
+            '<td style="padding: 12px 8px;"><span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; color: white; background: ' + categoryColor + ';">' + escapeHtml(categoryName) + '</span></td>' +
+            '<td style="padding: 12px 8px; color: #666; font-size: 13px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(marker.description || '-') + '</td>' +
+            '<td style="padding: 12px 8px; font-size: 12px; font-family: monospace; color: #555;">' + marker.lng.toFixed(6) + '</td>' +
+            '<td style="padding: 12px 8px; font-size: 12px; font-family: monospace; color: #555;">' + marker.lat.toFixed(6) + '</td>' +
+            '<td style="padding: 12px 8px; font-size: 12px; color: #999;">' + escapeHtml(marker.createdAt || '-') + '</td>' +
+            '<td style="padding: 12px 8px; text-align: center;"><div class="action-btns" style="justify-content: center;">' +
+                '<button class="btn-view" onclick="window.focusOnMarker(' + marker.lng + ', ' + marker.lat + ', \'' + escapeHtml(marker.id) + '\')" style="padding: 4px 10px; font-size: 11px;">📍 查看</button>' +
+                '<button class="btn-delete-small" onclick="window.deleteMarker(\'' + escapeHtml(marker.id) + '\')" style="padding: 4px 10px; font-size: 11px;">🗑️</button>' +
             '</div></td>' +
         '</tr>';
     }).join('');
@@ -161,16 +165,16 @@ export function updateMarkerStatsPanel(markers, categories) {
         return { name: cat.name, color: cat.color, count: count };
     });
 
-    let html = '<div style="margin-bottom: 10px; font-size: 14px; font-weight: bold;">总标注数: ' + markers.length + '</div>';
+    let html = '<div style="font-size: 15px; font-weight: bold; color: #333;">📊 共 <span style="color: #667eea; font-size: 20px;">' + markers.length + '</span> 条标注</div>';
 
     categoryStats.forEach(stat => {
-        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
-            '<span style="display: flex; align-items: center; gap: 8px;">' +
-                '<span style="width: 12px; height: 12px; background: ' + getColorValue(stat.color) + '; border-radius: 50%; display: inline-block;"></span>' +
-                escapeHtml(stat.name) +
-            '</span>' +
-            '<span style="font-weight: bold;">' + stat.count + '</span>' +
-        '</div>';
+        if (stat.count > 0) {
+            html += '<div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">' +
+                '<span style="width: 10px; height: 10px; background: ' + getColorValue(stat.color) + '; border-radius: 50%; display: inline-block;"></span>' +
+                '<span style="color: #666;">' + escapeHtml(stat.name) + '</span>' +
+                '<span style="font-weight: bold; color: #333;">' + stat.count + '</span>' +
+            '</div>';
+        }
     });
 
     statsDiv.innerHTML = html;

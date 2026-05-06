@@ -851,73 +851,47 @@
         
         <!-- 表格视图内容 -->
         <div id="tableView" class="main-content" style="display: none;">
-            <div class="sidebar">
-                <!-- 表格筛选 -->
-                <div class="section">
-                    <h3>🔍 筛选标注</h3>
-                    <div class="form-group">
-                        <label>按类型筛选</label>
-                        <select id="categoryFilter" onchange="filterTableByCategory()">
+            <div class="table-container" style="width: 100%; max-width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <h3 style="margin: 0;">📋 标注记录</h3>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <select id="categoryFilter" onchange="filterTableByCategory()" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; min-width: 120px;">
                             <option value="all">全部类型</option>
-                            <!-- 动态生成分类选项 -->
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label>搜索关键词</label>
-                        <input type="text" id="tableSearchInput" placeholder="输入名称或地址" onkeyup="filterTableBySearch()">
-                    </div>
-                    <button class="btn btn-primary btn-block" onclick="exportMarkers()">
-                        💾 导出标注
-                    </button>
-                </div>
-                
-                <!-- 统计信息 -->
-                <div class="section">
-                    <h3>📊 统计信息</h3>
-                    <div id="markerStats" style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding: 20px; border-radius: 12px;">
-                        <!-- 动态生成统计信息 -->
+                        <input type="text" id="tableSearchInput" placeholder="🔍 搜索名称或描述..." onkeyup="filterTableBySearch()" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; min-width: 180px;">
+                        <button class="btn btn-warning" onclick="refreshMarkers()" style="padding: 8px 16px; margin: 0; font-size: 13px;">🔄 刷新</button>
+                        <button class="btn btn-primary" onclick="exportMarkers()" style="padding: 8px 16px; margin: 0; font-size: 13px;">💾 导出</button>
+                        <button class="btn btn-danger" onclick="batchDeleteMarkers()" id="batchDeleteBtn" style="padding: 8px 16px; margin: 0; font-size: 13px;">🗑️ 批量删除 (0)</button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="table-container">
-                <h3>📋 标注记录表格</h3>
-                <div class="table-controls">
-                    <div>
-                        <button class="btn btn-primary" onclick="exportMarkers()" style="width: auto; display: inline-block;">
-                            💾 导出标注
-                        </button>
-                        <button class="btn btn-warning" onclick="refreshMarkers()" style="width: auto; display: inline-block; margin-left: 10px;">
-                            🔄 刷新
-                        </button>
-                    </div>
-                    <button class="btn btn-danger" onclick="batchDeleteMarkers()" id="batchDeleteBtn" style="width: auto; display: inline-block;">
-                        🗑️ 批量删除 (0)
-                    </button>
+
+                <div id="markerStats" style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
                 </div>
-                <div class="table-content">
-                    <table id="markersTable">
-                        <thead>
+
+                <div class="table-content" style="overflow-x: auto; max-height: 550px; overflow-y: auto; border-radius: 10px; border: 1px solid #eee;">
+                    <table id="markersTable" style="width: 100%; border-collapse: collapse;">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
                             <tr>
-                                <th style="text-align: center;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="width: 18px; height: 18px; margin: 0; cursor: pointer;"></th>
-                                <th>ID</th>
-                                <th>名称</th>
-                                <th>类型</th>
-                                <th>地址</th>
-                                <th>坐标</th>
-                                <th>创建时间</th>
-                                <th>操作</th>
+                                <th style="text-align: center; width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="width: 16px; height: 16px; cursor: pointer;"></th>
+                                <th style="width: 50px;">#</th>
+                                <th style="min-width: 150px;">名称</th>
+                                <th style="width: 100px;">分类</th>
+                                <th style="min-width: 160px;">描述</th>
+                                <th style="min-width: 140px;">经度</th>
+                                <th style="min-width: 120px;">纬度</th>
+                                <th style="width: 140px;">创建时间</th>
+                                <th style="width: 120px; text-align: center;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="markersTableBody">
-                            <!-- 动态生成表格内容 -->
                         </tbody>
                     </table>
                 </div>
-                <div id="noMarkersMessage" style="display: none; text-align: center; padding: 40px; color: #999;">
-                    暂无标注记录
+                <div id="noMarkersMessage" style="display: none; text-align: center; padding: 60px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
+                    <p style="font-size: 16px; margin-bottom: 5px;">暂无标注记录</p>
+                    <p style="font-size: 13px;">点击"新增标注"添加你的第一个标注</p>
                 </div>
-                <div id="pagination" style="display: none;"></div>
             </div>
         </div>
     </div>
