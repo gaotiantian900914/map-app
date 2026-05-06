@@ -744,12 +744,12 @@
             <div style="width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
                     <h2 style="color: #333; margin: 0;">🏷️ 分类管理</h2>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="text" id="categorySearchInput" placeholder="🔍 搜索分类名称..." 
-                               style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; min-width: 180px;"
-                               onkeyup="filterCategories()">
+                    <div style="display: flex; gap: 0; align-items: center; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white;">
+                        <input type="text" id="categorySearchInput" placeholder="🔍 模糊搜索分类名称..." 
+                               style="padding: 8px 12px; border: none; font-size: 13px; min-width: 180px; outline: none;"
+                               oninput="filterCategories()">
                         <select id="categoryColorFilter" onchange="filterCategories()" 
-                                style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px;">
+                                style="padding: 8px 12px; border: none; border-left: 1px solid #e0e0e0; font-size: 13px; outline: none; background: #f8f9fa;">
                             <option value="">全部颜色</option>
                             <option value="#FF5722">🔴 红色</option>
                             <option value="#2196F3">🔵 蓝色</option>
@@ -758,7 +758,7 @@
                             <option value="#9C27B0">🟣 紫色</option>
                             <option value="#FF9800">🟠 橙色</option>
                         </select>
-                        <button class="btn btn-primary" onclick="openCategoryModal()" style="padding: 8px 20px; margin: 0; font-size: 13px;">
+                        <button class="btn btn-primary" onclick="openCategoryModal()" style="padding: 8px 20px; margin: 0; font-size: 13px; border: none; border-left: 1px solid #e0e0e0; border-radius: 0;">
                             ➕ 新增分类
                         </button>
                     </div>
@@ -849,12 +849,14 @@
             <div class="table-container" style="width: 100%; max-width: 100%;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
                     <h3 style="margin: 0;">📋 标注记录</h3>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <select id="categoryFilter" onchange="filterTableByCategory()" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; min-width: 120px;">
-                            <option value="all">全部类型</option>
-                        </select>
-                        <input type="text" id="tableSearchInput" placeholder="🔍 搜索名称或描述..." onkeyup="filterTableBySearch()" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; min-width: 180px;">
-                        <button class="btn btn-warning" onclick="refreshMarkers()" style="padding: 8px 16px; margin: 0; font-size: 13px;">🔄 刷新</button>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 0; align-items: center; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white;">
+                            <select id="categoryFilter" onchange="filterTableBySearch()" style="padding: 8px 12px; border: none; font-size: 13px; min-width: 110px; outline: none; background: #f8f9fa;">
+                                <option value="all">全部类型</option>
+                            </select>
+                            <input type="text" id="tableSearchInput" placeholder="🔍 模糊搜索名称/描述/坐标..." oninput="filterTableBySearch()" style="padding: 8px 12px; border: none; border-left: 1px solid #e0e0e0; font-size: 13px; min-width: 200px; outline: none;">
+                        </div>
+                        <button class="btn btn-warning" onclick="refreshMarkers()" style="padding: 8px 16px; margin: 0; font-size: 13px;">🔄</button>
                         <button class="btn btn-primary" onclick="exportMarkers()" style="padding: 8px 16px; margin: 0; font-size: 13px;">💾 导出</button>
                         <button class="btn btn-danger" onclick="batchDeleteMarkers()" id="batchDeleteBtn" style="padding: 8px 16px; margin: 0; font-size: 13px;">🗑️ 批量删除 (0)</button>
                     </div>

@@ -4,7 +4,7 @@
  */
 
 import { saveMarkers, loadMarkers } from './storage-service.js';
-import { generateId, isValidMarker, calculateDistance } from './utils.js';
+import { generateId, isValidMarker, calculateDistance, fuzzyMatch } from './utils.js';
 
 let markers = [];
 
@@ -99,10 +99,12 @@ export function searchMarkers(criteria) {
         }
 
         if (criteria.keyword) {
-            const keyword = criteria.keyword.toLowerCase();
-            const nameMatch = marker.name.toLowerCase().includes(keyword);
-            const descMatch = marker.description && marker.description.toLowerCase().includes(keyword);
-            if (!nameMatch && !descMatch) {
+            const keyword = criteria.keyword;
+            const nameMatch = fuzzyMatch(marker.name, keyword);
+            const descMatch = fuzzyMatch(marker.description, keyword);
+            const coordMatch = fuzzyMatch(marker.lat.toFixed(6) + ', ' + marker.lng.toFixed(6), keyword);
+            const timeMatch = fuzzyMatch(marker.createdAt, keyword);
+            if (!nameMatch && !descMatch && !coordMatch && !timeMatch) {
                 return false;
             }
         }

@@ -42,6 +42,25 @@ export function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
+export function fuzzyMatch(text, keyword) {
+    if (!keyword || !keyword.trim()) return true;
+    if (!text) return false;
+
+    const t = String(text).toLowerCase();
+    const k = keyword.trim().toLowerCase();
+
+    if (t.includes(k)) return true;
+
+    const chars = k.split('');
+    let index = 0;
+    for (let i = 0; i < t.length && index < chars.length; i++) {
+        if (t[i] === chars[index]) {
+            index++;
+        }
+    }
+    return index === chars.length;
+}
+
 export function formatDistance(meters) {
     if (meters < 1000) {
         return Math.round(meters) + ' 米';

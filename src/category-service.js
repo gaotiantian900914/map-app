@@ -4,7 +4,7 @@
  */
 
 import { saveCategories, loadMarkers } from './storage-service.js';
-import { escapeHtml } from './utils.js';
+import { escapeHtml, fuzzyMatch } from './utils.js';
 
 const DEFAULT_CATEGORIES = [
     { id: 'default', name: '默认分类', color: '#2196F3', isDefault: true },
@@ -104,7 +104,7 @@ export function updateCategory(categoryId, data) {
 
 export function filterCategories(searchText, colorFilter) {
     return categories.filter(cat => {
-        const matchName = !searchText || cat.name.toLowerCase().includes(searchText.toLowerCase());
+        const matchName = fuzzyMatch(cat.name, searchText);
         const matchColor = !colorFilter || cat.color === colorFilter;
         return matchName && matchColor;
     });
