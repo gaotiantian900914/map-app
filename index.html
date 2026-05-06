@@ -741,54 +741,39 @@
         
         <!-- 分类管理视图内容 -->
         <div id="categoryView" class="main-content" style="display: none;">
-            <div class="category-container" style="max-width: 900px; margin: 0 auto; padding: 20px; width: 100%;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="color: #333;">🏷️ 分类管理</h2>
-                    <button class="btn btn-primary" onclick="openCategoryModal()" style="padding: 10px 20px;">
-                        ➕ 新增分类
-                    </button>
+            <div style="width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                    <h2 style="color: #333; margin: 0;">🏷️ 分类管理</h2>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="categorySearchInput" placeholder="🔍 搜索分类名称..." 
+                               style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; min-width: 180px;"
+                               onkeyup="filterCategories()">
+                        <select id="categoryColorFilter" onchange="filterCategories()" 
+                                style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px;">
+                            <option value="">全部颜色</option>
+                            <option value="#FF5722">🔴 红色</option>
+                            <option value="#2196F3">🔵 蓝色</option>
+                            <option value="#4CAF50">🟢 绿色</option>
+                            <option value="#FFC107">🟡 黄色</option>
+                            <option value="#9C27B0">🟣 紫色</option>
+                            <option value="#FF9800">🟠 橙色</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="openCategoryModal()" style="padding: 8px 20px; margin: 0; font-size: 13px;">
+                            ➕ 新增分类
+                        </button>
+                    </div>
                 </div>
-                
-                <!-- 搜索和筛选 -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <input type="text" id="categorySearchInput" placeholder="搜索分类名称..." 
-                           style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px;"
-                           onkeyup="filterCategories()">
-                    <select id="categoryColorFilter" onchange="filterCategories()" 
-                            style="padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                        <option value="">全部颜色</option>
-                        <option value="#FF5722">🔴 红色</option>
-                        <option value="#2196F3">🔵 蓝色</option>
-                        <option value="#4CAF50">🟢 绿色</option>
-                        <option value="#FFC107">🟡 黄色</option>
-                        <option value="#9C27B0">🟣 紫色</option>
-                        <option value="#FF9800">🟠 橙色</option>
-                    </select>
+
+                <div id="categoryStats" style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
                 </div>
-                
-                <!-- 分类列表表格 -->
-                <div style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                            <tr>
-                                <th style="padding: 15px; text-align: left;">颜色</th>
-                                <th style="padding: 15px; text-align: left;">分类名称</th>
-                                <th style="padding: 15px; text-align: left;">颜色值</th>
-                                <th style="padding: 15px; text-align: left;">标注数量</th>
-                                <th style="padding: 15px; text-align: left;">创建时间</th>
-                                <th style="padding: 15px; text-align: center;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="categoryTableBody">
-                            <!-- 动态生成分类列表 -->
-                        </tbody>
-                    </table>
+
+                <div id="categoryCardList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
                 </div>
-                
-                <!-- 空状态提示 -->
-                <div id="categoryEmptyState" style="display: none; text-align: center; padding: 50px; color: #999;">
-                    <p style="font-size: 18px;">暂无分类数据</p>
-                    <p style="margin-top: 10px;">点击"新增分类"按钮添加</p>
+
+                <div id="categoryEmptyState" style="display: none; text-align: center; padding: 60px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🏷️</div>
+                    <p style="font-size: 16px; margin-bottom: 5px;">暂无分类数据</p>
+                    <p style="font-size: 13px;">点击"新增分类"按钮添加</p>
                 </div>
             </div>
         </div>
@@ -808,36 +793,46 @@
                 
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 8px; color: #666; font-weight: 500;">选择颜色</label>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#FF5722', this)">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                        <label style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#FF5722', this)">
                             <input type="radio" name="categoryColor" value="#FF5722" style="display: none;">
-                            <span style="width: 24px; height: 24px; background: #FF5722; border-radius: 50%; display: inline-block;"></span>
-                            <span>红色</span>
+                            <span style="width: 28px; height: 28px; background: #FF5722; border-radius: 50%; display: inline-block;"></span>
+                            <span style="font-size: 11px; color: #666;">红色</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#2196F3', this)">
+                        <label style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#2196F3', this)">
                             <input type="radio" name="categoryColor" value="#2196F3" style="display: none;">
-                            <span style="width: 24px; height: 24px; background: #2196F3; border-radius: 50%; display: inline-block;"></span>
-                            <span>蓝色</span>
+                            <span style="width: 28px; height: 28px; background: #2196F3; border-radius: 50%; display: inline-block;"></span>
+                            <span style="font-size: 11px; color: #666;">蓝色</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#4CAF50', this)">
+                        <label style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#4CAF50', this)">
                             <input type="radio" name="categoryColor" value="#4CAF50" style="display: none;">
-                            <span style="width: 24px; height: 24px; background: #4CAF50; border-radius: 50%; display: inline-block;"></span>
-                            <span>绿色</span>
+                            <span style="width: 28px; height: 28px; background: #4CAF50; border-radius: 50%; display: inline-block;"></span>
+                            <span style="font-size: 11px; color: #666;">绿色</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#FFC107', this)">
+                        <label style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#FFC107', this)">
                             <input type="radio" name="categoryColor" value="#FFC107" style="display: none;">
-                            <span style="width: 24px; height: 24px; background: #FFC107; border-radius: 50%; display: inline-block;"></span>
-                            <span>黄色</span>
+                            <span style="width: 28px; height: 28px; background: #FFC107; border-radius: 50%; display: inline-block;"></span>
+                            <span style="font-size: 11px; color: #666;">黄色</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#9C27B0', this)">
+                        <label style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#9C27B0', this)">
                             <input type="radio" name="categoryColor" value="#9C27B0" style="display: none;">
-                            <span style="width: 24px; height: 24px; background: #9C27B0; border-radius: 50%; display: inline-block;"></span>
-                            <span>紫色</span>
+                            <span style="width: 28px; height: 28px; background: #9C27B0; border-radius: 50%; display: inline-block;"></span>
+                            <span style="font-size: 11px; color: #666;">紫色</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 8px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#FF9800', this)">
+                        <label style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#FF9800', this)">
                             <input type="radio" name="categoryColor" value="#FF9800" style="display: none;">
-                            <span style="width: 24px; height: 24px; background: #FF9800; border-radius: 50%; display: inline-block;"></span>
-                            <span>橙色</span>
+                            <span style="width: 28px; height: 28px; background: #FF9800; border-radius: 50%; display: inline-block;"></span>
+                            <span style="font-size: 11px; color: #666;">橙色</span>
+                        </label>
+                        <label style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#E91E63', this)">
+                            <input type="radio" name="categoryColor" value="#E91E63" style="display: none;">
+                            <span style="width: 28px; height: 28px; background: #E91E63; border-radius: 50%; display: inline-block;"></span>
+                            <span style="font-size: 11px; color: #666;">粉色</span>
+                        </label>
+                        <label style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.3s;" onclick="selectColor('#00BCD4', this)">
+                            <input type="radio" name="categoryColor" value="#00BCD4" style="display: none;">
+                            <span style="width: 28px; height: 28px; background: #00BCD4; border-radius: 50%; display: inline-block;"></span>
+                            <span style="font-size: 11px; color: #666;">青色</span>
                         </label>
                     </div>
                 </div>

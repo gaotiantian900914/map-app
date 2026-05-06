@@ -111,43 +111,70 @@ export function filterCategories(searchText, colorFilter) {
 }
 
 export function renderCategoryTable() {
-    const tbody = document.getElementById('categoryTableBody');
+    const cardList = document.getElementById('categoryCardList');
     const emptyState = document.getElementById('categoryEmptyState');
+    const statsDiv = document.getElementById('categoryStats');
 
-    if (!tbody) return;
+    if (!cardList) return;
 
     const searchText = (document.getElementById('categorySearchInput') || {}).value || '';
     const colorFilter = (document.getElementById('categoryColorFilter') || {}).value || '';
 
     const filteredCategories = filterCategories(searchText, colorFilter);
 
+    const allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
+
+    if (statsDiv) {
+        const totalCount = allMarkers.length;
+        let statsHtml = '<div style="font-size: 15px; font-weight: bold; color: #333;">🏷️ 共 <span style="color: #667eea; font-size: 20px;">' + categories.length + '</span> 个分类</div>';
+        statsHtml += '<div style="font-size: 13px; color: #666;">📍 总标注数: <strong>' + totalCount + '</strong></div>';
+        categories.forEach(function(cat) {
+            const count = allMarkers.filter(m => m.categoryId === cat.id || (cat.id === 'default' && !m.categoryId)).length;
+            statsHtml += '<div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">' +
+                '<span style="width: 10px; height: 10px; background: ' + escapeHtml(cat.color) + '; border-radius: 50%; display: inline-block;"></span>' +
+                '<span style="color: #666;">' + escapeHtml(cat.name) + '</span>' +
+                '<strong style="color: #333;">' + count + '</strong>' +
+            '</div>';
+        });
+        statsDiv.innerHTML = statsHtml;
+    }
+
     if (filteredCategories.length === 0) {
-        tbody.innerHTML = '';
+        cardList.innerHTML = '';
         if (emptyState) emptyState.style.display = 'block';
         return;
     }
 
     if (emptyState) emptyState.style.display = 'none';
 
-    const allMarkers = JSON.parse(localStorage.getItem('mapMarkers') || '[]');
-
-    tbody.innerHTML = filteredCategories.map(cat => {
+    cardList.innerHTML = filteredCategories.map(cat => {
         const count = allMarkers.filter(m => m.categoryId === cat.id || (cat.id === 'default' && !m.categoryId)).length;
         const createdTime = cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : '-';
 
-        return '<tr style="border-bottom: 1px solid #eee;">' +
-            '<td style="padding: 15px;">' +
-                '<span style="width: 32px; height: 32px; background: ' + escapeHtml(cat.color) + '; border-radius: 50%; display: inline-block; border: 2px solid ' + escapeHtml(cat.color) + ';"></span>' +
-            '</td>' +
-            '<td style="padding: 15px; font-weight: 500; color: ' + escapeHtml(cat.color) + ';">' + escapeHtml(cat.name) + '</td>' +
-            '<td style="padding: 15px; color: #666;">' + escapeHtml(cat.color) + '</td>' +
-            '<td style="padding: 15px;">' + count + ' 个标注</td>' +
-            '<td style="padding: 15px; color: #999;">' + createdTime + '</td>' +
-            '<td style="padding: 15px; text-align: center;">' +
-                '<button onclick="window.editCategory(\'' + escapeHtml(cat.id) + '\')" style="padding: 6px 12px; margin-right: 5px; border: none; background: #2196F3; color: white; border-radius: 4px; cursor: pointer; font-size: 12px;">编辑</button>' +
-                (!cat.isDefault ? '<button onclick="window.deleteCategoryById(\'' + escapeHtml(cat.id) + '\')" style="padding: 6px 12px; border: none; background: #f44336; color: white; border-radius: 4px; cursor: pointer; font-size: 12px;">删除</button>' : '<span style="color: #999; font-size: 12px;">默认</span>') +
-            '</td>' +
-        '</tr>';
+        return '<div style="background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform=\'translateY(-2px)\'; this.style.boxShadow=\'0 6px 20px rgba(0,0,0,0.12)\'" onmouseout="this.style.transform=\'translateY(0)\'; this.style.boxShadow=\'0 2px 12px rgba(0,0,0,0.08)\'">' +
+            '<div style="height: 6px; background: ' + escapeHtml(cat.color) + ';"></div>' +
+            '<div style="padding: 20px;">' +
+                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">' +
+                    '<div style="display: flex; align-items: center; gap: 12px;">' +
+                        '<span style="width: 40px; height: 40px; background: ' + escapeHtml(cat.color) + '; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: bold;">' + escapeHtml(cat.name.charAt(0)) + '</span>' +
+                        '<div>' +
+                            '<div style="font-weight: 600; font-size: 16px; color: #333;">' + escapeHtml(cat.name) + '</div>' +
+                            '<div style="font-size: 12px; color: #999; margin-top: 2px;">' + (cat.isDefault ? '📌 默认分类' : '创建于 ' + createdTime) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                    '<div style="display: flex; align-items: center; gap: 6px;">' +
+                        '<span style="font-size: 24px; font-weight: bold; color: ' + escapeHtml(cat.color) + ';">' + count + '</span>' +
+                        '<span style="font-size: 13px; color: #999;">个标注</span>' +
+                    '</div>' +
+                    '<div style="display: flex; gap: 8px;">' +
+                        '<button onclick="window.editCategory(\'' + escapeHtml(cat.id) + '\')" style="padding: 6px 14px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s;" onmouseover="this.style.borderColor=\'#2196F3\'; this.style.color=\'#2196F3\'" onmouseout="this.style.borderColor=\'#e0e0e0\'; this.style.color=\'#666\'">✏️ 编辑</button>' +
+                        (!cat.isDefault ? '<button onclick="window.deleteCategoryById(\'' + escapeHtml(cat.id) + '\')" style="padding: 6px 14px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s;" onmouseover="this.style.borderColor=\'#f44336\'; this.style.color=\'#f44336\'" onmouseout="this.style.borderColor=\'#e0e0e0\'; this.style.color=\'#666\'">🗑️ 删除</button>' : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
     }).join('');
 }
 
