@@ -76,16 +76,28 @@ export function displayMarker(markerData, options = {}) {
     }
 
     try {
+        const categoryColor = options.categoryColor || '#2196F3';
+        const categoryName = options.categoryName || '默认';
+
+        const markerContent = '<div style="position: relative; width: 30px; height: 40px;">' +
+            '<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25c0-8.284-6.716-15-15-15z" fill="' + categoryColor + '"/>' +
+                '<circle cx="15" cy="15" r="6" fill="white"/>' +
+            '</svg>' +
+        '</div>';
+
         const amapMarker = new AMap.Marker({
             position: [markerData.lng, markerData.lat],
             title: markerData.name,
+            content: markerContent,
+            offset: new AMap.Pixel(-15, -40),
             extData: markerData
         });
 
         const infoWindowContent = '<div style="padding: 10px; min-width: 200px;">' +
             '<h4 style="margin: 0 0 10px 0; color: #333;">' + escapeHtml(markerData.name) + '</h4>' +
             '<p style="margin: 5px 0; color: #666; font-size: 12px;">' +
-                '<strong>分类:</strong> ' + escapeHtml(options.categoryName || '默认') +
+                '<strong>分类:</strong> <span style="display: inline-block; padding: 1px 8px; border-radius: 10px; color: white; background: ' + categoryColor + '; font-size: 11px;">' + escapeHtml(categoryName) + '</span>' +
             '</p>' +
             '<p style="margin: 5px 0; color: #666; font-size: 12px;">' +
                 '<strong>描述:</strong> ' + escapeHtml(markerData.description || '无描述') +

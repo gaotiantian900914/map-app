@@ -35,9 +35,11 @@ async function initializeApp() {
             markers.forEach(function(marker) {
                 const category = categories.find(c => c.id === marker.categoryId);
                 const categoryName = category ? category.name : '默认分类';
+                const categoryColor = category ? category.color : '#2196F3';
 
                 displayMarker(marker, {
                     categoryName: categoryName,
+                    categoryColor: categoryColor,
                     onClick: function(markerData) {
                         console.log('点击标记:', markerData.name);
                     }
@@ -73,7 +75,8 @@ function reloadMapMarkers() {
     markers.forEach(function(marker) {
         const category = categories.find(c => c.id === marker.categoryId);
         const categoryName = category ? category.name : '默认分类';
-        displayMarker(marker, { categoryName: categoryName });
+        const categoryColor = category ? category.color : '#2196F3';
+        displayMarker(marker, { categoryName: categoryName, categoryColor: categoryColor });
     });
 }
 
@@ -217,8 +220,9 @@ window.addMarkerFromInput = function(name, description, lat, lng, categoryId) {
         const categories = getCategories();
         const category = categories.find(c => c.id === categoryId);
         const categoryName = category ? category.name : '默认分类';
+        const categoryColor = category ? category.color : '#2196F3';
 
-        displayMarker(marker, { categoryName: categoryName });
+        displayMarker(marker, { categoryName: categoryName, categoryColor: categoryColor });
         refreshAllUI();
 
         showStatus('标注添加成功', 'success');
@@ -513,8 +517,9 @@ window.batchImportStations = async function() {
                 const categories = getCategories();
                 const category = categories.find(c => c.id === categoryId);
                 const categoryName = category ? category.name : '默认分类';
+                const categoryColor = category ? category.color : '#2196F3';
 
-                displayMarker(marker, { categoryName: categoryName });
+                displayMarker(marker, { categoryName: categoryName, categoryColor: categoryColor });
                 addedCount++;
             } catch (e) {
                 skipCount++;
