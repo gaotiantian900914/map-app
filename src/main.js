@@ -373,6 +373,173 @@ window.batchDeleteMarkers = function() {
     showStatus('已删除 ' + ids.length + ' 个标注', 'success');
 };
 
+window.onBatchCategoryChange = function() {
+    const categorySelect = document.getElementById('batchImportCategory');
+    const keywordInput = document.getElementById('batchImportKeyword');
+    if (!categorySelect || !keywordInput) return;
+
+    const categoryKeywords = {
+        xpeng: '小鹏超充站',
+        lixiang: '理想超充站',
+        tesla: '特斯拉超级充电站',
+        nio: '蔚来换电站',
+        charging: '充电站'
+    };
+
+    keywordInput.value = categoryKeywords[categorySelect.value] || '';
+};
+
+window.batchImportStations = async function() {
+    const categorySelect = document.getElementById('batchImportCategory');
+    const keywordInput = document.getElementById('batchImportKeyword');
+    const cityInput = document.getElementById('batchImportCity');
+    const statusDiv = document.getElementById('batchImportStatus');
+    const btn = document.getElementById('batchImportBtn');
+
+    const categoryId = categorySelect ? categorySelect.value : 'charging';
+    const city = cityInput ? cityInput.value.trim() || '深圳' : '深圳';
+
+    const categoryKeywords = {
+        xpeng: '小鹏超充站',
+        lixiang: '理想超充站',
+        tesla: '特斯拉超级充电站',
+        nio: '蔚来换电站',
+        charging: '充电站'
+    };
+
+    let keyword = keywordInput ? keywordInput.value.trim() : '';
+    if (!keyword) {
+        keyword = categoryKeywords[categoryId] || '充电站';
+        if (keywordInput) keywordInput.value = keyword;
+    }
+
+    if (statusDiv) statusDiv.innerHTML = '<span style="color: #2196F3;">⏳ 正在搜索 "' + keyword + '"，请稍候...</span>';
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 搜索中...'; }
+
+    try {
+        const allPois = [];
+        const keywords = [keyword];
+
+        if (categoryId === 'xpeng') {
+            keywords.push('小鹏充电站', '小鹏汽车充电', 'XPeng充电');
+        } else if (categoryId === 'lixiang') {
+            keywords.push('理想充电站', '理想汽车充电', 'LI充电');
+        } else if (categoryId === 'tesla') {
+            keywords.push('特斯拉充电站', 'Tesla充电');
+        } else if (categoryId === 'nio') {
+            keywords.push('蔚来充电站', '蔚来服务中心');
+        }
+
+        for (const kw of keywords) {
+            if (statusDiv) statusDiv.innerHTML = '<span style="color: #2196F3;">⏳ 搜索 "' + kw + '"...</span>';
+
+            for (let page = 1; page <= 5; page++) {
+                const url = 'https://restapi.amap.com/v3/place/text?key=4214ffb1464f3d9ffd569072100f3f3e' +
+                    '&keywords=' + encodeURIComponent(kw) +
+                    '&city=' + encodeURIComponent(city) +
+                    '&offset=25&page=' + page + '&extensions=all';
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.status === '1' && data.pois && data.pois.length > 0) {
+                    data.pois.forEach(function(poi) {
+                        const location = poi.location ? poi.location.split(',') : null;
+                        if (location && location.length === 2) {
+                            const lng = parseFloat(location[0]);
+                            const lat = parseFloat(location[1]);
+
+                            if (isNaN(lng) || isNaN(lat)) return;
+
+                            const isDuplicate = allPois.some(function(p) {
+                                return Math.abs(p.lng - lng) < 0.0001 && Math.abs(p.lat - lat) < 0.0001;
+                            });
+
+                            if (!isDuplicate) {
+                                allPois.push({
+                                    name: poi.name,
+                                    address: poi.address || '',
+                                    lng: lng,
+                                    lat: lat,
+                                    tel: poi.tel || '',
+                                    type: poi.type || ''
+                                });
+                            }
+                        }
+                    });
+
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color: #2196F3;">⏳ "' + kw + '" 已找到 ' + allPois.length + ' 个站点（第' + page + '页）...</span>';
+
+                    if (data.pois.length < 25) break;
+                } else {
+                    break;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+
+        if (allPois.length === 0) {
+            if (statusDiv) statusDiv.innerHTML = '<span style="color: #f44336;">❌ 未找到任何站点，请尝试更换关键词</span>';
+            if (btn) { btn.disabled = false; btn.textContent = '🚀 一键批量导入'; }
+            return;
+        }
+
+        if (statusDiv) statusDiv.innerHTML = '<span style="color: #FF9800;">⏳ 找到 ' + allPois.length + ' 个站点，正在导入...</span>';
+
+        let addedCount = 0;
+        let skipCount = 0;
+        const existingMarkers = getMarkers();
+
+        allPois.forEach(function(poi) {
+            const exists = existingMarkers.some(function(m) {
+                return Math.abs(m.lng - poi.lng) < 0.0001 && Math.abs(m.lat - poi.lat) < 0.0001;
+            });
+
+            if (exists) {
+                skipCount++;
+                return;
+            }
+
+            try {
+                const marker = createMarker({
+                    name: poi.name,
+                    description: poi.address || poi.type || '',
+                    lat: poi.lat,
+                    lng: poi.lng,
+                    categoryId: categoryId
+                });
+
+                const categories = getCategories();
+                const category = categories.find(c => c.id === categoryId);
+                const categoryName = category ? category.name : '默认分类';
+
+                displayMarker(marker, { categoryName: categoryName });
+                addedCount++;
+            } catch (e) {
+                skipCount++;
+            }
+        });
+
+        reloadMapMarkers();
+        refreshAllUI();
+
+        let resultMsg = '✅ 导入完成！新增 ' + addedCount + ' 个站点';
+        if (skipCount > 0) {
+            resultMsg += '，跳过 ' + skipCount + ' 个重复站点';
+        }
+        if (statusDiv) statusDiv.innerHTML = '<span style="color: #4CAF50;">' + resultMsg + '</span>';
+        showStatus(resultMsg, 'success');
+
+    } catch (error) {
+        console.error('批量导入失败:', error);
+        if (statusDiv) statusDiv.innerHTML = '<span style="color: #f44336;">❌ 导入失败：' + error.message + '</span>';
+        showStatus('批量导入失败：' + error.message, 'error');
+    }
+
+    if (btn) { btn.disabled = false; btn.textContent = '🚀 一键批量导入'; }
+};
+
 window.toggleSelectAll = function() {
     const selectAll = document.getElementById('selectAll');
     const checkboxes = document.querySelectorAll('.marker-checkbox');

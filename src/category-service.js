@@ -9,7 +9,11 @@ import { escapeHtml, fuzzyMatch } from './utils.js';
 const DEFAULT_CATEGORIES = [
     { id: 'default', name: '默认分类', color: '#2196F3', isDefault: true },
     { id: 'charging', name: '充电站', color: '#4CAF50', isDefault: false },
-    { id: 'parking', name: '停车场', color: '#FF9800', isDefault: false }
+    { id: 'parking', name: '停车场', color: '#FF9800', isDefault: false },
+    { id: 'xpeng', name: '小鹏超充', color: '#FF5722', isDefault: false },
+    { id: 'lixiang', name: '理想超充', color: '#00BCD4', isDefault: false },
+    { id: 'tesla', name: '特斯拉超充', color: '#9C27B0', isDefault: false },
+    { id: 'nio', name: '蔚来换电', color: '#3F51B5', isDefault: false }
 ];
 
 let categories = [];
