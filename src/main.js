@@ -4,16 +4,17 @@
  */
 
 import { initCloudBase } from './storage-service.js';
-import { initCategories, getCategories, getCategoryName, getCategoryColor, renderCategoryTable, openCategoryModal, closeCategoryModal, selectColor, saveCategoryFromModal, deleteCategoryById, updateCategoryFilter } from './category-service.js';
+import { initCategories, getCategories, getCategoryName, getCategoryColor, renderCategoryTable, openCategoryModal, closeCategoryModal, selectColor, saveCategoryFromModal, deleteCategoryById as removeCategoryById, updateCategoryFilter } from './category-service.js';
 import { initMarkers, getMarkers, addMarker as createMarker, deleteMarker as removeMarker, deleteMarkersBatch, searchMarkers, exportMarkers, clearAllMarkers as removeAllMarkers } from './marker-service.js';
 import { initMap, getMap, displayMarker, fitMapToMarkers as fitView, setMapCenter, focusOnMarker as focusMarker, drawSearchCircle, clearMapMarkers } from './map-service.js';
-import { searchPlace, searchNearbyMarkers } from './search-service.js';
-import { showStatus, updateMarkerStats, highlightMarkerInList, showNearbyResults, renderMarkersTable, updateMarkerStatsPanel, updateBatchDeleteButton, switchTab } from './ui-service.js';
+import { searchPlace as doSearchPlace, searchNearbyMarkers } from './search-service.js';
+import { showStatus, updateMarkerStats, highlightMarkerInList, showNearbyResults, renderMarkersTable, updateMarkerStatsPanel, updateBatchDeleteButton, switchTab as doSwitchTab } from './ui-service.js';
 import { exportToCSV, isValidCoordinate } from './utils.js';
 
 let currentPosition = null;
 let searchCircle = null;
 let searchTempMarker = null;
+let appInitialized = false;
 
 async function initializeApp() {
     setTimeout(async function() {
@@ -29,33 +30,23 @@ async function initializeApp() {
 
             await initMarkers();
 
-            const categories = getCategories();
-            const markers = getMarkers();
+            reloadMapMarkers();
+            refreshAllUI();
 
-            markers.forEach(function(marker) {
-                const category = categories.find(c => c.id === marker.categoryId || (c.id === 'default' && !marker.categoryId));
-                const categoryName = category ? category.name : '默认分类';
-                const categoryColor = category ? category.color : '#2196F3';
-
-                displayMarker(marker, {
-                    categoryName: categoryName,
-                    categoryColor: categoryColor,
-                    onClick: function(markerData) {
-                        console.log('点击标记:', markerData.name);
-                    }
-                });
-            });
-
-            updateMarkerStats(markers.length, categories.length);
-            updateCategoryFilter();
-
+            appInitialized = true;
             showStatus('地图加载完成，可以开始搜索', 'success');
 
         } catch (error) {
             console.error('应用初始化失败:', error);
-            showStatus('应用初始化失败：' + error.message, 'error');
+
+            try {
+                await initMarkers();
+                refreshAllUI();
+            } catch (e) {}
+
+            showStatus('地图初始化失败，部分功能可能不可用', 'error');
         }
-    }, 500);
+    }, 800);
 }
 
 function refreshAllUI() {
@@ -94,10 +85,9 @@ window.searchPlace = async function() {
     if (statusDiv) statusDiv.innerHTML = '<p style="color: #2196F3;">正在搜索...</p>';
 
     try {
-        const results = await searchPlace(keyword);
+        const results = await doSearchPlace(keyword);
         if (results && results.length > 0) {
-            const poi = results[0];
-            setMapCenter(poi.lng, poi.lat, 16);
+            setMapCenter(results[0].lng, results[0].lat, 16);
 
             if (resultsDiv) {
                 let html = '';
@@ -137,12 +127,12 @@ window.selectSearchResult = function(lng, lat, name) {
         offset: new AMap.Pixel(-16, -32)
     });
 
-    const infoContent = '<div style="padding: 8px; min-width: 150px;">' +
+    var infoContent = '<div style="padding: 8px; min-width: 150px;">' +
         '<h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px;">' + name + '</h4>' +
         '<p style="margin: 0; color: #999; font-size: 12px;">点击"添加标注"保存此位置</p>' +
         '</div>';
 
-    const infoWindow = new AMap.InfoWindow({
+    var infoWindow = new AMap.InfoWindow({
         content: infoContent,
         offset: new AMap.Pixel(0, -30)
     });
@@ -270,7 +260,7 @@ window.exportMarkers = function() {
 };
 
 window.switchTab = function(tab) {
-    switchTab(tab);
+    doSwitchTab(tab);
 
     if (tab === 'category') {
         renderCategoryTable();
@@ -279,6 +269,11 @@ window.switchTab = function(tab) {
         const categories = getCategories();
         renderMarkersTable(markers, getCategoryName, getCategoryColor);
         updateMarkerStatsPanel(markers, categories);
+    } else if (tab === 'map') {
+        setTimeout(function() {
+            const map = getMap();
+            if (map) map.resize();
+        }, 100);
     }
 };
 
@@ -305,7 +300,7 @@ window.saveCategory = function() {
 };
 
 window.deleteCategoryById = function(categoryId) {
-    deleteCategoryById(categoryId);
+    removeCategoryById(categoryId);
     reloadMapMarkers();
     refreshAllUI();
 };
