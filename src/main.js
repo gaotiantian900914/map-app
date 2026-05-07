@@ -33,7 +33,7 @@ async function initializeApp() {
             const markers = getMarkers();
 
             markers.forEach(function(marker) {
-                const category = categories.find(c => c.id === marker.categoryId);
+                const category = categories.find(c => c.id === marker.categoryId || (c.id === 'default' && !marker.categoryId));
                 const categoryName = category ? category.name : '默认分类';
                 const categoryColor = category ? category.color : '#2196F3';
 
@@ -73,7 +73,7 @@ function reloadMapMarkers() {
     const markers = getMarkers();
     const categories = getCategories();
     markers.forEach(function(marker) {
-        const category = categories.find(c => c.id === marker.categoryId);
+        const category = categories.find(c => c.id === marker.categoryId || (c.id === 'default' && !marker.categoryId));
         const categoryName = category ? category.name : '默认分类';
         const categoryColor = category ? category.color : '#2196F3';
         displayMarker(marker, { categoryName: categoryName, categoryColor: categoryColor });

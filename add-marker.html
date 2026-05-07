@@ -148,7 +148,6 @@
         import { initMap, getMap, displayMarker, setMapCenter } from './src/map-service.js';
         import { isValidCoordinate } from './src/utils.js';
 
-        let addPageMap = null;
         let addPageCategories = [];
 
         async function initAddPage() {
@@ -157,7 +156,7 @@
                 initCategories();
                 addPageCategories = getCategories();
 
-                addPageMap = new AMap.Map('map', {
+                await initMap('map', {
                     zoom: 12,
                     center: [114.057868, 22.542896]
                 });
@@ -166,7 +165,7 @@
                 const markers = getMarkers();
 
                 markers.forEach(function(marker) {
-                    const category = addPageCategories.find(c => c.id === marker.categoryId);
+                    const category = addPageCategories.find(c => c.id === marker.categoryId || (c.id === 'default' && !marker.categoryId));
                     const categoryName = category ? category.name : '默认分类';
                     const categoryColor = category ? category.color : '#2196F3';
                     displayMarker(marker, { categoryName: categoryName, categoryColor: categoryColor });
@@ -242,7 +241,7 @@
         }
 
         window.selectPlace = function(lng, lat, name, address) {
-            if (addPageMap) { addPageMap.setCenter([lng, lat]); addPageMap.setZoom(17); }
+            setMapCenter(lng, lat, 17);
             document.getElementById('markerName').value = name;
             document.getElementById('markerLng').value = lng;
             document.getElementById('markerLat').value = lat;
@@ -256,7 +255,7 @@
                 navigator.geolocation.getCurrentPosition(
                     function(pos) {
                         const lat = pos.coords.latitude; const lng = pos.coords.longitude;
-                        if (addPageMap) { addPageMap.setCenter([lng, lat]); addPageMap.setZoom(17); }
+                        setMapCenter(lng, lat, 17);
                         document.getElementById('markerLng').value = lng;
                         document.getElementById('markerLat').value = lat;
                         enterPinningMode();
@@ -269,9 +268,10 @@
 
         function enterPinningMode() {
             document.getElementById('pinningMode').style.display = 'block';
-            if (addPageMap) {
-                addPageMap.on('moveend', function() {
-                    const center = addPageMap.getCenter();
+            const map = getMap();
+            if (map) {
+                map.on('moveend', function() {
+                    const center = map.getCenter();
                     document.getElementById('markerLng').value = center.lng;
                     document.getElementById('markerLat').value = center.lat;
                 });

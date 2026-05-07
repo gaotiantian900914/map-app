@@ -10,6 +10,24 @@ let markers = [];
 
 export async function initMarkers() {
     markers = await loadMarkers();
+
+    let needSave = false;
+    markers.forEach(function(marker) {
+        if (marker.category && !marker.categoryId) {
+            marker.categoryId = marker.category;
+            delete marker.category;
+            needSave = true;
+        }
+        if (!marker.categoryId) {
+            marker.categoryId = 'default';
+            needSave = true;
+        }
+    });
+
+    if (needSave) {
+        saveMarkers(markers);
+    }
+
     return markers;
 }
 
