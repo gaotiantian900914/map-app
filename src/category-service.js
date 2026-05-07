@@ -27,6 +27,18 @@ export function initCategories() {
 
     if (savedCategories && savedCategories.length > 0) {
         categories = savedCategories;
+
+        DEFAULT_CATEGORIES.forEach(function(defCat) {
+            const exists = categories.some(c => c.id === defCat.id);
+            if (!exists) {
+                categories.push({
+                    ...defCat,
+                    createdAt: new Date().toISOString()
+                });
+            }
+        });
+
+        saveCategories(categories);
     } else {
         categories = DEFAULT_CATEGORIES.map(c => ({
             ...c,
