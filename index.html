@@ -718,40 +718,6 @@
                     </button>
                     <div id="searchResults" class="search-results"></div>
                 </div>
-
-                <!-- 批量导入 -->
-                <div class="section">
-                    <h3>📦 批量导入站点</h3>
-                    <div class="form-group">
-                        <label>选择品牌分类</label>
-                        <select id="batchImportCategory" onchange="onBatchCategoryChange()" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px;">
-                            <option value="xpeng">🔴 小鹏超充</option>
-                            <option value="lixiang">🔵 理想超充</option>
-                            <option value="tesla">🟣 特斯拉超充</option>
-                            <option value="nio">🔷 蔚来换电</option>
-                            <option value="charging">🟢 充电站（通用）</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>搜索关键词（可自定义）</label>
-                        <input type="text" id="batchImportKeyword" placeholder="如：小鹏超充站、理想充电站" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px;">
-                    </div>
-                    <div class="form-group">
-                        <label>搜索城市</label>
-                        <input type="text" id="batchImportCity" value="深圳" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px;">
-                    </div>
-                    <button class="btn btn-primary" onclick="batchImportStations()" id="batchImportBtn" style="width: 100%;">
-                        🚀 一键批量导入
-                    </button>
-                    <div id="batchImportStatus" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
-                </div>
-
-                <!-- 操作按钮 -->
-                <div class="section" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-danger" onclick="clearAllMarkers()" style="flex: 1; min-width: 120px;">
-                        🗑️ 清空标注
-                    </button>
-                </div>
             </div>
 
             <div class="map-container">

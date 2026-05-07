@@ -51,11 +51,12 @@
         .center-marker { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 1000; pointer-events: none; }
         .center-marker svg { width: 36px; height: 36px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
         .pinning-mode { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #ff9800; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        .batch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .batch-btn { padding: 10px 8px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; text-align: center; background: white; }
+        .batch-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .batch-btn { padding: 10px 6px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; text-align: center; background: white; }
         .batch-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-        .batch-btn .brand-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-        .batch-btn .count { font-size: 11px; color: #999; display: block; margin-top: 2px; }
+        .batch-btn .brand-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 3px; vertical-align: middle; }
+        .batch-btn .brand-name { display: block; margin-top: 2px; }
+        .batch-btn .count { font-size: 10px; color: #999; display: block; margin-top: 1px; }
         @media (max-width: 768px) { .container { flex-direction: column; } .left-panel { width: 100%; height: 50%; } .right-panel { height: 50%; } }
     </style>
 </head>
@@ -105,19 +106,35 @@
                 <div class="batch-grid">
                     <button class="batch-btn" onclick="batchImport('xpeng')">
                         <span class="brand-dot" style="background: #FF5722;"></span>小鹏超充
-                        <span class="count">一键导入全城</span>
+                        <span class="count">一键导入</span>
                     </button>
                     <button class="batch-btn" onclick="batchImport('lixiang')">
                         <span class="brand-dot" style="background: #00BCD4;"></span>理想超充
-                        <span class="count">一键导入全城</span>
+                        <span class="count">一键导入</span>
                     </button>
                     <button class="batch-btn" onclick="batchImport('tesla')">
                         <span class="brand-dot" style="background: #9C27B0;"></span>特斯拉超充
-                        <span class="count">一键导入全城</span>
+                        <span class="count">一键导入</span>
                     </button>
                     <button class="batch-btn" onclick="batchImport('nio')">
                         <span class="brand-dot" style="background: #3F51B5;"></span>蔚来换电
-                        <span class="count">一键导入全城</span>
+                        <span class="count">一键导入</span>
+                    </button>
+                    <button class="batch-btn" onclick="batchImport('byd')">
+                        <span class="brand-dot" style="background: #E53935;"></span>比亚迪超充
+                        <span class="count">一键导入</span>
+                    </button>
+                    <button class="batch-btn" onclick="batchImport('gac')">
+                        <span class="brand-dot" style="background: #7CB342;"></span>广汽能源
+                        <span class="count">一键导入</span>
+                    </button>
+                    <button class="batch-btn" onclick="batchImport('yianqi')">
+                        <span class="brand-dot" style="background: #00897B;"></span>逸安启
+                        <span class="count">一键导入</span>
+                    </button>
+                    <button class="batch-btn" onclick="batchImport('lantu')">
+                        <span class="brand-dot" style="background: #546E7A;"></span>岚途
+                        <span class="count">一键导入</span>
                     </button>
                 </div>
                 <div id="batchStatus" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
@@ -314,7 +331,11 @@
                 xpeng: ['小鹏超充站', '小鹏充电站', '小鹏汽车充电'],
                 lixiang: ['理想超充站', '理想充电站', '理想汽车充电'],
                 tesla: ['特斯拉超级充电站', '特斯拉充电站'],
-                nio: ['蔚来换电站', '蔚来充电站', '蔚来服务中心']
+                nio: ['蔚来换电站', '蔚来充电站', '蔚来服务中心'],
+                byd: ['比亚迪超充站', '比亚迪充电站', '比亚迪汽车充电'],
+                gac: ['广汽能源充电站', '广汽超充站', '广汽埃安充电'],
+                yianqi: ['逸安启充电站', '逸安启超充站', '逸安启'],
+                lantu: ['岚途充电站', '岚途超充站', '岚途汽车充电']
             };
 
             const keywords = categoryKeywords[categoryId] || ['充电站'];

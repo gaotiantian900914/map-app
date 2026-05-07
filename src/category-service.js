@@ -13,7 +13,11 @@ const DEFAULT_CATEGORIES = [
     { id: 'xpeng', name: '小鹏超充', color: '#FF5722', isDefault: false },
     { id: 'lixiang', name: '理想超充', color: '#00BCD4', isDefault: false },
     { id: 'tesla', name: '特斯拉超充', color: '#9C27B0', isDefault: false },
-    { id: 'nio', name: '蔚来换电', color: '#3F51B5', isDefault: false }
+    { id: 'nio', name: '蔚来换电', color: '#3F51B5', isDefault: false },
+    { id: 'byd', name: '比亚迪超充', color: '#E53935', isDefault: false },
+    { id: 'gac', name: '广汽能源', color: '#7CB342', isDefault: false },
+    { id: 'yianqi', name: '逸安启', color: '#00897B', isDefault: false },
+    { id: 'lantu', name: '岚途', color: '#546E7A', isDefault: false }
 ];
 
 let categories = [];
