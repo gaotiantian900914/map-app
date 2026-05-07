@@ -14,6 +14,8 @@ import { exportToCSV, isValidCoordinate } from './utils.js';
 let currentPosition = null;
 let searchCircle = null;
 let searchTempMarker = null;
+let locationMarker = null;
+let locationCircle = null;
 let appInitialized = false;
 
 async function initializeApp() {
@@ -124,12 +126,18 @@ window.selectSearchResult = function(lng, lat, name) {
         map: map,
         position: [lng, lat],
         title: name,
-        offset: new AMap.Pixel(-16, -32)
+        content: '<div style="position: relative; width: 30px; height: 40px;">' +
+            '<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25c0-8.284-6.716-15-15-15z" fill="#FF9800"/>' +
+                '<circle cx="15" cy="15" r="6" fill="white"/>' +
+            '</svg>' +
+        '</div>',
+        offset: new AMap.Pixel(-15, -40)
     });
 
     var infoContent = '<div style="padding: 8px; min-width: 150px;">' +
         '<h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px;">' + name + '</h4>' +
-        '<p style="margin: 0; color: #999; font-size: 12px;">点击"添加标注"保存此位置</p>' +
+        '<p style="margin: 0; color: #999; font-size: 12px;">📍 经纬度: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</p>' +
         '</div>';
 
     var infoWindow = new AMap.InfoWindow({
@@ -141,24 +149,106 @@ window.selectSearchResult = function(lng, lat, name) {
 };
 
 window.locateMe = function() {
-    const geolocation = window.amapGeolocation;
-    if (!geolocation) {
-        showStatus('定位服务未初始化', 'error');
-        return;
+    const statusDiv = document.getElementById('locationStatus');
+
+    function onLocationSuccess(lng, lat, accuracy) {
+        currentPosition = { lng: lng, lat: lat };
+
+        if (locationMarker) {
+            locationMarker.setMap(null);
+            locationMarker = null;
+        }
+        if (locationCircle) {
+            locationCircle.setMap(null);
+            locationCircle = null;
+        }
+
+        const map = getMap();
+        if (!map) return;
+
+        locationMarker = new AMap.Marker({
+            map: map,
+            position: [lng, lat],
+            title: '我的位置',
+            content: '<div style="position: relative; width: 30px; height: 40px;">' +
+                '<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">' +
+                    '<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25c0-8.284-6.716-15-15-15z" fill="#2196F3"/>' +
+                    '<circle cx="15" cy="15" r="6" fill="white"/>' +
+                '</svg>' +
+            '</div>',
+            offset: new AMap.Pixel(-15, -40)
+        });
+
+        if (accuracy && accuracy > 0) {
+            locationCircle = new AMap.Circle({
+                map: map,
+                center: [lng, lat],
+                radius: Math.min(accuracy, 5000),
+                strokeColor: '#2196F3',
+                strokeWeight: 2,
+                strokeOpacity: 0.5,
+                fillColor: '#2196F3',
+                fillOpacity: 0.1
+            });
+        }
+
+        setMapCenter(lng, lat, 16);
+
+        var infoContent = '<div style="padding: 8px; min-width: 150px;">' +
+            '<h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px;">📍 我的位置</h4>' +
+            '<p style="margin: 0; color: #999; font-size: 12px;">' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</p>' +
+            '</div>';
+
+        var infoWindow = new AMap.InfoWindow({
+            content: infoContent,
+            offset: new AMap.Pixel(0, -30)
+        });
+
+        infoWindow.open(map, locationMarker.getPosition());
+
+        if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">✅ 定位成功</p>';
     }
 
-    const statusDiv = document.getElementById('locationStatus');
-    if (statusDiv) statusDiv.innerHTML = '<p style="color: #2196F3;">正在定位...</p>';
-
-    geolocation.getCurrentPosition(function(status, result) {
-        if (status === 'complete') {
-            currentPosition = result.position;
-            setMapCenter(currentPosition.lng, currentPosition.lat, 16);
-            if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">定位成功</p>';
-        } else {
-            if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：' + result.message + '</p>';
-        }
-    });
+    const geolocation = window.amapGeolocation;
+    if (geolocation) {
+        if (statusDiv) statusDiv.innerHTML = '<p style="color: #2196F3;">正在定位...</p>';
+        geolocation.getCurrentPosition(function(status, result) {
+            if (status === 'complete') {
+                var lng = typeof result.position.getLng === 'function' ? result.position.getLng() : result.position.lng;
+                var lat = typeof result.position.getLat === 'function' ? result.position.getLat() : result.position.lat;
+                var accuracy = result.accuracy || 0;
+                onLocationSuccess(lng, lat, accuracy);
+            } else {
+                if (navigator.geolocation) {
+                    if (statusDiv) statusDiv.innerHTML = '<p style="color: #FF9800;">高德定位失败，尝试浏览器定位...</p>';
+                    navigator.geolocation.getCurrentPosition(
+                        function(pos) {
+                            onLocationSuccess(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+                        },
+                        function(err) {
+                            if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：' + err.message + '</p>';
+                        },
+                        { enableHighAccuracy: true, timeout: 10000 }
+                    );
+                } else {
+                    if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：' + (result.message || '未知错误') + '</p>';
+                }
+            }
+        });
+    } else if (navigator.geolocation) {
+        if (statusDiv) statusDiv.innerHTML = '<p style="color: #2196F3;">正在定位...</p>';
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                onLocationSuccess(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+            },
+            function(err) {
+                if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：' + err.message + '</p>';
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    } else {
+        showStatus('定位服务不可用', 'error');
+    }
 };
 
 window.searchNearby = function() {
