@@ -29,7 +29,8 @@ export async function initMap(containerId, options = {}) {
                 placeSearch = new AMap.PlaceSearch({
                     pageSize: 10,
                     pageIndex: 1,
-                    city: '深圳'
+                    city: '深圳',
+                    extensions: 'all'
                 });
 
                 geolocation = new AMap.Geolocation({
