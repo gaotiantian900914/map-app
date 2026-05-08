@@ -7,7 +7,7 @@ import { initCloudBase } from './storage-service.js';
 import { initCategories, getCategories, getCategoryName, getCategoryColor, renderCategoryTable, openCategoryModal, closeCategoryModal, selectColor, saveCategoryFromModal, deleteCategoryById as removeCategoryById, updateCategoryFilter } from './category-service.js';
 import { initMarkers, getMarkers, addMarker as createMarker, deleteMarker as removeMarker, deleteMarkersBatch, searchMarkers, exportMarkers } from './marker-service.js';
 import { initMap, getMap, displayMarker, fitMapToMarkers as fitView, setMapCenter, focusOnMarker as focusMarker, drawSearchCircle, clearMapMarkers } from './map-service.js';
-import { searchPlace as doSearchPlace, searchNearbyMarkers } from './search-service.js';
+import { searchPlace as doSearchPlace, searchNearbyMarkers, reverseGeocode } from './search-service.js';
 import { showStatus, updateMarkerStats, highlightMarkerInList, showNearbyResults, renderMarkersTable, updateMarkerStatsPanel, updateBatchDeleteButton, switchTab as doSwitchTab } from './ui-service.js';
 import { exportToCSV, isValidCoordinate } from './utils.js';
 import { initSearchHistory, addSearchRecord, deleteSearchRecord, clearSearchHistory, renderSearchHistoryTable } from './search-history-service.js';
@@ -167,89 +167,108 @@ window.locateMe = function() {
     function onLocationSuccess(lng, lat, accuracy) {
         currentPosition = { lng: lng, lat: lat };
 
-        var recordName = '我的位置';
-        var recordAddress = lat.toFixed(6) + ', ' + lng.toFixed(6);
-
-        var gc = window.amapGeocoder;
-        if (gc) {
-            gc.getAddress([lng, lat], function(status, result) {
-                if (status === 'complete' && result && result.regeocode) {
-                    recordName = result.regeocode.formattedAddress || '我的位置';
-                    recordAddress = result.regeocode.formattedAddress || '';
-                }
-                addSearchRecord({
-                    type: 'location',
-                    name: recordName,
-                    address: recordAddress,
-                    lat: lat,
-                    lng: lng,
-                    source: 'map'
-                });
-            });
-        } else {
+        reverseGeocode(lng, lat).then(function(geoResult) {
             addSearchRecord({
                 type: 'location',
-                name: recordName,
-                address: recordAddress,
+                name: geoResult.name,
+                address: geoResult.address,
                 lat: lat,
                 lng: lng,
                 source: 'map'
             });
-        }
 
-        if (locationMarker) {
-            locationMarker.setMap(null);
-            locationMarker = null;
-        }
-        if (locationCircle) {
-            locationCircle.setMap(null);
-            locationCircle = null;
-        }
+            if (locationMarker) {
+                locationMarker.setMap(null);
+                locationMarker = null;
+            }
+            if (locationCircle) {
+                locationCircle.setMap(null);
+                locationCircle = null;
+            }
 
-        const map = getMap();
-        if (!map) return;
+            const map = getMap();
+            if (!map) return;
 
-        locationMarker = new AMap.Marker({
-            map: map,
-            position: [lng, lat],
-            title: '我的位置',
-            content: '<div style="position: relative; width: 30px; height: 40px;">' +
-                '<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">' +
-                    '<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25c0-8.284-6.716-15-15-15z" fill="#2196F3"/>' +
-                    '<circle cx="15" cy="15" r="6" fill="white"/>' +
-                '</svg>' +
-            '</div>',
-            offset: new AMap.Pixel(-15, -40)
-        });
-
-        if (accuracy && accuracy > 0) {
-            locationCircle = new AMap.Circle({
+            locationMarker = new AMap.Marker({
                 map: map,
-                center: [lng, lat],
-                radius: Math.min(accuracy, 5000),
-                strokeColor: '#2196F3',
-                strokeWeight: 2,
-                strokeOpacity: 0.5,
-                fillColor: '#2196F3',
-                fillOpacity: 0.1
+                position: [lng, lat],
+                title: geoResult.name,
+                content: '<div style="position: relative; width: 30px; height: 40px;">' +
+                    '<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">' +
+                        '<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25c0-8.284-6.716-15-15-15z" fill="#2196F3"/>' +
+                        '<circle cx="15" cy="15" r="6" fill="white"/>' +
+                    '</svg>' +
+                '</div>',
+                offset: new AMap.Pixel(-15, -40)
             });
-        }
 
-        setMapCenter(lng, lat, 16);
+            if (accuracy && accuracy > 0) {
+                locationCircle = new AMap.Circle({
+                    map: map,
+                    center: [lng, lat],
+                    radius: Math.min(accuracy, 5000),
+                    strokeColor: '#2196F3',
+                    strokeWeight: 2,
+                    strokeOpacity: 0.5,
+                    fillColor: '#2196F3',
+                    fillOpacity: 0.1
+                });
+            }
 
-        var infoContent = '<div style="padding: 8px; min-width: 150px;">' +
-            '<h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px;">📍 我的位置</h4>' +
-            '<p style="margin: 0; color: #999; font-size: 12px;">' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</p>' +
-            '</div>';
+            setMapCenter(lng, lat, 16);
 
-        var infoWindow = new AMap.InfoWindow({
-            content: infoContent,
-            offset: new AMap.Pixel(0, -30)
+            var infoContent = '<div style="padding: 8px; min-width: 150px;">' +
+                '<h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px;">📍 ' + geoResult.name + '</h4>' +
+                '<p style="margin: 0; color: #999; font-size: 12px;">' + geoResult.address + '</p>' +
+                '</div>';
+
+            var infoWindow = new AMap.InfoWindow({
+                content: infoContent,
+                offset: new AMap.Pixel(0, -30)
+            });
+
+            infoWindow.open(map, locationMarker.getPosition());
+
+            if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">✅ 定位成功</p>';
+        }).catch(function() {
+            addSearchRecord({
+                type: 'location',
+                name: '我的位置',
+                address: lat.toFixed(6) + ', ' + lng.toFixed(6),
+                lat: lat,
+                lng: lng,
+                source: 'map'
+            });
+
+            if (locationMarker) {
+                locationMarker.setMap(null);
+                locationMarker = null;
+            }
+            if (locationCircle) {
+                locationCircle.setMap(null);
+                locationCircle = null;
+            }
+
+            const map = getMap();
+            if (!map) return;
+
+            locationMarker = new AMap.Marker({
+                map: map,
+                position: [lng, lat],
+                title: '我的位置',
+                content: '<div style="position: relative; width: 30px; height: 40px;">' +
+                    '<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">' +
+                        '<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25c0-8.284-6.716-15-15-15z" fill="#2196F3"/>' +
+                        '<circle cx="15" cy="15" r="6" fill="white"/>' +
+                    '</svg>' +
+                '</div>',
+                offset: new AMap.Pixel(-15, -40)
+            });
+
+            setMapCenter(lng, lat, 16);
+
+            if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">✅ 定位成功</p>';
         });
-
-        infoWindow.open(map, locationMarker.getPosition());
-
-        if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">✅ 定位成功</p>';
     }
 
     const geolocation = window.amapGeolocation;

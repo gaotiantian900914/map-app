@@ -170,6 +170,7 @@
         import { initMap, getMap, displayMarker, setMapCenter } from './src/map-service.js';
         import { isValidCoordinate } from './src/utils.js';
         import { initSearchHistory, addSearchRecord } from './src/search-history-service.js';
+        import { reverseGeocode } from './src/search-service.js';
 
         let addPageCategories = [];
 
@@ -331,36 +332,29 @@
                         document.getElementById('markerLat').value = lat;
                         enterPinningMode();
 
-                        var recName = '我的位置';
-                        var recAddr = lat.toFixed(6) + ', ' + lng.toFixed(6);
-                        var gc = window.amapGeocoder;
-                        if (gc) {
-                            gc.getAddress([lng, lat], function(status, result) {
-                                if (status === 'complete' && result && result.regeocode) {
-                                    recName = result.regeocode.formattedAddress || '我的位置';
-                                    recAddr = result.regeocode.formattedAddress || '';
-                                }
-                                addSearchRecord({
-                                    type: 'location',
-                                    name: recName,
-                                    address: recAddr,
-                                    lat: lat,
-                                    lng: lng,
-                                    source: 'add'
-                                });
-                            });
-                        } else {
+                        reverseGeocode(lng, lat).then(function(geoResult) {
+                            document.getElementById('markerName').value = geoResult.name;
+                            document.getElementById('markerDesc').value = geoResult.address;
                             addSearchRecord({
                                 type: 'location',
-                                name: recName,
-                                address: recAddr,
+                                name: geoResult.name,
+                                address: geoResult.address,
                                 lat: lat,
                                 lng: lng,
                                 source: 'add'
                             });
-                        }
-
-                        showStatus('已定位到您的位置', 'success');
+                            showStatus('已定位到：' + geoResult.name, 'success');
+                        }).catch(function() {
+                            addSearchRecord({
+                                type: 'location',
+                                name: '我的位置',
+                                address: lat.toFixed(6) + ', ' + lng.toFixed(6),
+                                lat: lat,
+                                lng: lng,
+                                source: 'add'
+                            });
+                            showStatus('已定位到您的位置', 'success');
+                        });
                     },
                     function(err) { showStatus('定位失败：' + err.message, 'error'); }
                 );

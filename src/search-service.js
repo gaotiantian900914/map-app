@@ -1,9 +1,6 @@
-/**
- * 搜索服务模块
- * 处理地点搜索和附近标记搜索
- */
-
 import { calculateDistance } from './utils.js';
+
+const AMAP_REST_KEY = '4214ffb1464f3d9ffd569072100f3f3e';
 
 export function searchPlace(keyword) {
     return new Promise((resolve, reject) => {
@@ -12,92 +9,85 @@ export function searchPlace(keyword) {
             return;
         }
 
-        if (typeof AMap === 'undefined') {
-            reject(new Error('地图服务未加载，请刷新页面'));
-            return;
-        }
+        var url = 'https://restapi.amap.com/v3/place/text?key=' + AMAP_REST_KEY +
+            '&keywords=' + encodeURIComponent(keyword.trim()) +
+            '&city=深圳&offset=10&page=1&extensions=all';
 
-        function doSearch(ps) {
-            ps.search(keyword.trim(), function(status, result) {
-                if (status === 'complete' && result) {
-                    if (result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
-                        const pois = [];
-                        result.poiList.pois.forEach(function(poi) {
-                            if (!poi.location) return;
+        fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.status === '1' && data.pois && data.pois.length > 0) {
+                    const pois = [];
+                    data.pois.forEach(function(poi) {
+                        if (!poi.location) return;
 
-                            var lat, lng;
-                            try {
-                                if (typeof poi.location === 'string') {
-                                    var loc = poi.location.split(',');
-                                    lng = parseFloat(loc[0]);
-                                    lat = parseFloat(loc[1]);
-                                } else if (typeof poi.location === 'object') {
-                                    lng = typeof poi.location.getLng === 'function' ? poi.location.getLng() : poi.location.lng;
-                                    lat = typeof poi.location.getLat === 'function' ? poi.location.getLat() : poi.location.lat;
-                                }
-                            } catch (e) {
-                                return;
-                            }
+                        var loc = poi.location.split(',');
+                        var lng = parseFloat(loc[0]);
+                        var lat = parseFloat(loc[1]);
 
-                            if (isNaN(lat) || isNaN(lng)) return;
+                        if (isNaN(lat) || isNaN(lng)) return;
 
-                            pois.push({
-                                name: poi.name,
-                                address: poi.address,
-                                lat: lat,
-                                lng: lng,
-                                type: poi.type,
-                                tel: poi.tel
-                            });
+                        pois.push({
+                            name: poi.name,
+                            address: poi.address || poi.pname + poi.cityname + poi.adname,
+                            lat: lat,
+                            lng: lng,
+                            type: poi.type,
+                            tel: poi.tel
                         });
+                    });
 
-                        if (pois.length > 0) {
-                            resolve(pois);
-                        } else {
-                            reject(new Error('未找到有效的地点信息'));
-                        }
+                    if (pois.length > 0) {
+                        resolve(pois);
                     } else {
-                        reject(new Error('未找到相关地点'));
+                        reject(new Error('未找到有效的地点信息'));
                     }
-                } else if (status === 'no_data') {
+                } else if (data.status === '1' && (!data.pois || data.pois.length === 0)) {
                     reject(new Error('未找到相关地点'));
                 } else {
-                    var errMsg = '搜索失败';
-                    if (result && typeof result === 'string') {
-                        errMsg = result;
-                    } else if (result && result.message) {
-                        errMsg = result.message;
-                    } else if (result && result.info) {
-                        errMsg = result.info;
-                    }
-                    reject(new Error(errMsg));
+                    reject(new Error(data.info || '搜索失败'));
                 }
+            })
+            .catch(function(err) {
+                reject(new Error('网络请求失败：' + err.message));
             });
-        }
+    });
+}
 
-        if (AMap.PlaceSearch) {
-            var ps = new AMap.PlaceSearch({
-                pageSize: 10,
-                pageIndex: 1,
-                city: '深圳',
-                extensions: 'all'
-            });
-            doSearch(ps);
-        } else {
-            AMap.plugin('AMap.PlaceSearch', function() {
-                if (!AMap.PlaceSearch) {
-                    reject(new Error('搜索插件加载失败，请刷新页面'));
-                    return;
+export function reverseGeocode(lng, lat) {
+    return new Promise((resolve, reject) => {
+        var url = 'https://restapi.amap.com/v3/geocode/regeo?key=' + AMAP_REST_KEY +
+            '&location=' + lng + ',' + lat + '&extensions=all&radius=1000';
+
+        fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.status === '1' && data.regeocode) {
+                    var rc = data.regeocode;
+                    var ac = rc.addressComponent || {};
+                    var name = '我的位置';
+                    var address = rc.formatted_address || '';
+
+                    if (rc.pois && rc.pois.length > 0) {
+                        name = rc.pois[0].name || ac.township || '我的位置';
+                    } else if (ac.township) {
+                        name = ac.township;
+                        if (ac.streetNumber && ac.streetNumber.street) {
+                            name += ac.streetNumber.street;
+                            if (ac.streetNumber.number) {
+                                name += ac.streetNumber.number + '号';
+                            }
+                        }
+                    }
+
+                    resolve({ name: name, address: address });
+                } else {
+                    resolve({ name: '我的位置', address: lat.toFixed(6) + ', ' + lng.toFixed(6) });
                 }
-                var ps = new AMap.PlaceSearch({
-                    pageSize: 10,
-                    pageIndex: 1,
-                    city: '深圳',
-                    extensions: 'all'
-                });
-                doSearch(ps);
+            })
+            .catch(function() {
+                resolve({ name: '我的位置', address: lat.toFixed(6) + ', ' + lng.toFixed(6) });
             });
-        }
     });
 }
 
