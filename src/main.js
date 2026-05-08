@@ -167,14 +167,35 @@ window.locateMe = function() {
     function onLocationSuccess(lng, lat, accuracy) {
         currentPosition = { lng: lng, lat: lat };
 
-        addSearchRecord({
-            type: 'location',
-            name: '我的位置',
-            address: lat.toFixed(6) + ', ' + lng.toFixed(6),
-            lat: lat,
-            lng: lng,
-            source: 'map'
-        });
+        var recordName = '我的位置';
+        var recordAddress = lat.toFixed(6) + ', ' + lng.toFixed(6);
+
+        var gc = window.amapGeocoder;
+        if (gc) {
+            gc.getAddress([lng, lat], function(status, result) {
+                if (status === 'complete' && result && result.regeocode) {
+                    recordName = result.regeocode.formattedAddress || '我的位置';
+                    recordAddress = result.regeocode.formattedAddress || '';
+                }
+                addSearchRecord({
+                    type: 'location',
+                    name: recordName,
+                    address: recordAddress,
+                    lat: lat,
+                    lng: lng,
+                    source: 'map'
+                });
+            });
+        } else {
+            addSearchRecord({
+                type: 'location',
+                name: recordName,
+                address: recordAddress,
+                lat: lat,
+                lng: lng,
+                source: 'map'
+            });
+        }
 
         if (locationMarker) {
             locationMarker.setMap(null);

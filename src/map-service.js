@@ -7,6 +7,7 @@ import { isValidCoordinate, escapeHtml } from './utils.js';
 
 let map = null;
 let placeSearch = null;
+let geocoder = null;
 let geolocation = null;
 let currentMarkers = [];
 let activeInfoWindow = null;
@@ -25,12 +26,17 @@ export async function initMap(containerId, options = {}) {
                 mapStyle: options.mapStyle || 'amap://styles/normal'
             });
 
-            AMap.plugin(['AMap.PlaceSearch', 'AMap.Geolocation', 'AMap.Circle', 'AMap.GeometryUtil'], function() {
+            AMap.plugin(['AMap.PlaceSearch', 'AMap.Geolocation', 'AMap.Geocoder', 'AMap.Circle', 'AMap.GeometryUtil'], function() {
                 placeSearch = new AMap.PlaceSearch({
                     pageSize: 10,
                     pageIndex: 1,
                     city: '深圳',
                     extensions: 'all'
+                });
+
+                geocoder = new AMap.Geocoder({
+                    city: '深圳',
+                    radius: 1000
                 });
 
                 geolocation = new AMap.Geolocation({
@@ -40,10 +46,12 @@ export async function initMap(containerId, options = {}) {
                 });
 
                 window.amapGeolocation = geolocation;
+                window.amapGeocoder = geocoder;
 
                 resolve({
                     map,
                     placeSearch,
+                    geocoder,
                     geolocation
                 });
             });
@@ -61,6 +69,10 @@ export function getMap() {
 
 export function getPlaceSearch() {
     return placeSearch;
+}
+
+export function getGeocoder() {
+    return geocoder;
 }
 
 export function getGeolocation() {

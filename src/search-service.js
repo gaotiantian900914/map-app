@@ -3,7 +3,6 @@
  * 处理地点搜索和附近标记搜索
  */
 
-import { getPlaceSearch } from './map-service.js';
 import { calculateDistance } from './utils.js';
 
 export function searchPlace(keyword) {
@@ -13,62 +12,70 @@ export function searchPlace(keyword) {
             return;
         }
 
-        const placeSearch = getPlaceSearch();
-        if (!placeSearch) {
-            reject(new Error('搜索服务未初始化，请刷新页面重试'));
+        if (typeof AMap === 'undefined') {
+            reject(new Error('地图服务未加载，请刷新页面'));
             return;
         }
 
-        placeSearch.search(keyword.trim(), function(status, result) {
-            if (status === 'complete' && result) {
-                if (result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
-                    const pois = [];
-                    result.poiList.pois.forEach(function(poi) {
-                        if (!poi.location) return;
+        AMap.plugin('AMap.PlaceSearch', function() {
+            var ps = new AMap.PlaceSearch({
+                pageSize: 10,
+                pageIndex: 1,
+                city: '深圳',
+                extensions: 'all'
+            });
 
-                        var lat, lng;
-                        try {
-                            if (typeof poi.location === 'string') {
-                                var loc = poi.location.split(',');
-                                lng = parseFloat(loc[0]);
-                                lat = parseFloat(loc[1]);
-                            } else if (typeof poi.location === 'object') {
-                                lng = typeof poi.location.getLng === 'function' ? poi.location.getLng() : poi.location.lng;
-                                lat = typeof poi.location.getLat === 'function' ? poi.location.getLat() : poi.location.lat;
+            ps.search(keyword.trim(), function(status, result) {
+                if (status === 'complete' && result) {
+                    if (result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
+                        const pois = [];
+                        result.poiList.pois.forEach(function(poi) {
+                            if (!poi.location) return;
+
+                            var lat, lng;
+                            try {
+                                if (typeof poi.location === 'string') {
+                                    var loc = poi.location.split(',');
+                                    lng = parseFloat(loc[0]);
+                                    lat = parseFloat(loc[1]);
+                                } else if (typeof poi.location === 'object') {
+                                    lng = typeof poi.location.getLng === 'function' ? poi.location.getLng() : poi.location.lng;
+                                    lat = typeof poi.location.getLat === 'function' ? poi.location.getLat() : poi.location.lat;
+                                }
+                            } catch (e) {
+                                return;
                             }
-                        } catch (e) {
-                            return;
-                        }
 
-                        if (isNaN(lat) || isNaN(lng)) return;
+                            if (isNaN(lat) || isNaN(lng)) return;
 
-                        pois.push({
-                            name: poi.name,
-                            address: poi.address,
-                            lat: lat,
-                            lng: lng,
-                            type: poi.type,
-                            tel: poi.tel
+                            pois.push({
+                                name: poi.name,
+                                address: poi.address,
+                                lat: lat,
+                                lng: lng,
+                                type: poi.type,
+                                tel: poi.tel
+                            });
                         });
-                    });
 
-                    if (pois.length > 0) {
-                        resolve(pois);
+                        if (pois.length > 0) {
+                            resolve(pois);
+                        } else {
+                            reject(new Error('未找到有效的地点信息'));
+                        }
                     } else {
-                        reject(new Error('未找到有效的地点信息'));
+                        reject(new Error('未找到相关地点'));
                     }
-                } else {
+                } else if (status === 'no_data') {
                     reject(new Error('未找到相关地点'));
+                } else {
+                    var errMsg = '搜索失败，请重试';
+                    if (result && result.message) {
+                        errMsg = result.message;
+                    }
+                    reject(new Error(errMsg));
                 }
-            } else if (status === 'no_data') {
-                reject(new Error('未找到相关地点'));
-            } else {
-                var errMsg = '搜索失败，请重试';
-                if (result && result.message) {
-                    errMsg = result.message;
-                }
-                reject(new Error(errMsg));
-            }
+            });
         });
     });
 }
