@@ -10,6 +10,7 @@ import { initMap, getMap, displayMarker, fitMapToMarkers as fitView, setMapCente
 import { searchPlace as doSearchPlace, searchNearbyMarkers } from './search-service.js';
 import { showStatus, updateMarkerStats, highlightMarkerInList, showNearbyResults, renderMarkersTable, updateMarkerStatsPanel, updateBatchDeleteButton, switchTab as doSwitchTab } from './ui-service.js';
 import { exportToCSV, isValidCoordinate } from './utils.js';
+import { initSearchHistory, addSearchRecord, deleteSearchRecord, clearSearchHistory, renderSearchHistoryTable } from './search-history-service.js';
 
 let currentPosition = null;
 let searchCircle = null;
@@ -24,6 +25,8 @@ async function initializeApp() {
             await initCloudBase();
 
             initCategories();
+
+            initSearchHistory();
 
             await initMap('map', {
                 zoom: 12,
@@ -91,6 +94,16 @@ window.searchPlace = async function() {
         if (results && results.length > 0) {
             setMapCenter(results[0].lng, results[0].lat, 16);
 
+            addSearchRecord({
+                type: 'search',
+                keyword: keyword,
+                name: results[0].name,
+                address: results[0].address || '',
+                lat: results[0].lat,
+                lng: results[0].lng,
+                source: 'map'
+            });
+
             if (resultsDiv) {
                 let html = '';
                 results.forEach(function(p, index) {
@@ -153,6 +166,15 @@ window.locateMe = function() {
 
     function onLocationSuccess(lng, lat, accuracy) {
         currentPosition = { lng: lng, lat: lat };
+
+        addSearchRecord({
+            type: 'location',
+            name: '我的位置',
+            address: lat.toFixed(6) + ', ' + lng.toFixed(6),
+            lat: lat,
+            lng: lng,
+            source: 'map'
+        });
 
         if (locationMarker) {
             locationMarker.setMap(null);
@@ -348,6 +370,8 @@ window.switchTab = function(tab) {
         const categories = getCategories();
         renderMarkersTable(markers, getCategoryName, getCategoryColor);
         updateMarkerStatsPanel(markers, categories);
+    } else if (tab === 'history') {
+        renderSearchHistoryTable({});
     } else if (tab === 'map') {
         setTimeout(function() {
             const map = getMap();
@@ -467,6 +491,51 @@ document.addEventListener('change', function(e) {
         updateBatchDeleteButton();
     }
 });
+
+window.filterHistory = function() {
+    const typeFilter = document.getElementById('historyTypeFilter');
+    const searchInput = document.getElementById('historySearchInput');
+
+    const criteria = {
+        type: typeFilter ? typeFilter.value : 'all',
+        keyword: searchInput ? searchInput.value.trim() : ''
+    };
+
+    renderSearchHistoryTable(criteria);
+};
+
+window.deleteHistoryRecord = function(id) {
+    deleteSearchRecord(id);
+    window.filterHistory();
+};
+
+window.clearAllHistory = function() {
+    if (!confirm('确定要清空所有搜索记录吗？')) return;
+    clearSearchHistory();
+    renderSearchHistoryTable({});
+    showStatus('搜索记录已清空', 'success');
+};
+
+window.gotoHistoryLocation = function(lng, lat, name) {
+    doSwitchTab('map');
+    document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+    document.querySelectorAll('.tab-item')[0].classList.add('active');
+
+    setMapCenter(lng, lat, 17);
+
+    new AMap.Marker({
+        map: getMap(),
+        position: [lng, lat],
+        title: name,
+        content: '<div style="position: relative; width: 30px; height: 40px;">' +
+            '<svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M15 0C6.716 0 0 6.716 0 15c0 11.25 15 25 15 25s15-13.75 15-25c0-8.284-6.716-15-15-15z" fill="#FF9800"/>' +
+                '<circle cx="15" cy="15" r="6" fill="white"/>' +
+            '</svg>' +
+        '</div>',
+        offset: new AMap.Pixel(-15, -40)
+    });
+};
 
 if (document.readyState === 'complete') {
     initializeApp();

@@ -164,6 +164,7 @@
         import { initMarkers, getMarkers, addMarker, deleteMarker, searchMarkers } from './src/marker-service.js';
         import { initMap, getMap, displayMarker, setMapCenter } from './src/map-service.js';
         import { isValidCoordinate } from './src/utils.js';
+        import { initSearchHistory, addSearchRecord } from './src/search-history-service.js';
 
         let addPageCategories = [];
 
@@ -171,6 +172,7 @@
             try {
                 await initCloudBase();
                 initCategories();
+                initSearchHistory();
                 addPageCategories = getCategories();
 
                 await initMap('map', {
@@ -226,6 +228,30 @@
                 ps.search(keyword, function(status, result) {
                     if (status === 'complete' && result && result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
                         displaySearchResults(result.poiList.pois);
+
+                        var firstPoi = result.poiList.pois[0];
+                        var firstLng, firstLat;
+                        try {
+                            if (typeof firstPoi.location === 'string') {
+                                var loc = firstPoi.location.split(',');
+                                firstLng = parseFloat(loc[0]); firstLat = parseFloat(loc[1]);
+                            } else if (firstPoi.location && typeof firstPoi.location === 'object') {
+                                firstLng = typeof firstPoi.location.getLng === 'function' ? firstPoi.location.getLng() : firstPoi.location.lng;
+                                firstLat = typeof firstPoi.location.getLat === 'function' ? firstPoi.location.getLat() : firstPoi.location.lat;
+                            }
+                        } catch (e) {}
+                        if (!isNaN(firstLat) && !isNaN(firstLng)) {
+                            addSearchRecord({
+                                type: 'search',
+                                keyword: keyword,
+                                name: firstPoi.name,
+                                address: firstPoi.address || '',
+                                lat: firstLat,
+                                lng: firstLng,
+                                source: 'add'
+                            });
+                        }
+
                         showStatus('找到 ' + result.poiList.pois.length + ' 个结果', 'success');
                     } else if (status === 'no_data') {
                         showStatus('未找到相关地点', 'error');
@@ -284,6 +310,16 @@
                         document.getElementById('markerLng').value = lng;
                         document.getElementById('markerLat').value = lat;
                         enterPinningMode();
+
+                        addSearchRecord({
+                            type: 'location',
+                            name: '我的位置',
+                            address: lat.toFixed(6) + ', ' + lng.toFixed(6),
+                            lat: lat,
+                            lng: lng,
+                            source: 'add'
+                        });
+
                         showStatus('已定位到您的位置', 'success');
                     },
                     function(err) { showStatus('定位失败：' + err.message, 'error'); }

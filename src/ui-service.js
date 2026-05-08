@@ -192,7 +192,7 @@ export function switchTab(tab) {
     const tabItems = document.querySelectorAll('.tab-item');
     tabItems.forEach(item => item.classList.remove('active'));
 
-    ['mapView', 'addView', 'categoryView', 'tableView'].forEach(viewId => {
+    ['mapView', 'addView', 'categoryView', 'tableView', 'historyView'].forEach(viewId => {
         const view = document.getElementById(viewId);
         if (view) view.style.display = 'none';
     });
@@ -212,6 +212,10 @@ export function switchTab(tab) {
         case 'table':
             document.getElementById('tableView').style.display = 'flex';
             tabItems[3].classList.add('active');
+            break;
+        case 'history':
+            document.getElementById('historyView').style.display = 'block';
+            tabItems[4].classList.add('active');
             break;
     }
 }

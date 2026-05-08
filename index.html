@@ -682,6 +682,9 @@
             <button class="tab-item" onclick="switchTab('table')">
                 📋 标注表格
             </button>
+            <button class="tab-item" onclick="switchTab('history')">
+                🔍 搜索记录
+            </button>
         </div>
 
         <!-- 地图视图内容 -->
@@ -881,6 +884,38 @@
                     <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
                     <p style="font-size: 16px; margin-bottom: 5px;">暂无标注记录</p>
                     <p style="font-size: 13px;">点击"新增标注"添加你的第一个标注</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索记录视图内容 -->
+        <div id="historyView" class="main-content" style="display: none;">
+            <div style="width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                    <h2 style="color: #333; margin: 0;">🔍 搜索记录</h2>
+                    <div style="display: flex; gap: 0; align-items: center; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white;">
+                        <select id="historyTypeFilter" onchange="filterHistory()" style="padding: 8px 12px; border: none; font-size: 13px; min-width: 100px; outline: none; background: #f8f9fa;">
+                            <option value="all">全部类型</option>
+                            <option value="search">🔎 搜索</option>
+                            <option value="location">📍 定位</option>
+                        </select>
+                        <input type="text" id="historySearchInput" placeholder="🔍 搜索名称/地址..." oninput="filterHistory()" style="padding: 8px 12px; border: none; border-left: 1px solid #e0e0e0; font-size: 13px; min-width: 180px; outline: none;">
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-danger" onclick="clearAllHistory()" style="padding: 8px 16px; margin: 0; font-size: 13px;">🗑️ 清空记录</button>
+                    </div>
+                </div>
+
+                <div id="historyStats" style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
+                </div>
+
+                <div id="historyCardList" style="display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 550px; overflow-y: auto; padding-right: 5px;">
+                </div>
+
+                <div id="historyEmptyState" style="display: none; text-align: center; padding: 60px 20px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                    <p style="font-size: 16px; margin-bottom: 5px;">暂无搜索记录</p>
+                    <p style="font-size: 13px;">在地图视图搜索地点或定位后，记录会自动保存在这里</p>
                 </div>
             </div>
         </div>
