@@ -223,8 +223,7 @@
 
             showStatus('正在搜索...', 'info');
 
-            AMap.plugin('AMap.PlaceSearch', function() {
-                var ps = new AMap.PlaceSearch({ city: '深圳', pageSize: 10, extensions: 'all' });
+            function doSearch(ps) {
                 ps.search(keyword, function(status, result) {
                     if (status === 'complete' && result && result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
                         displaySearchResults(result.poiList.pois);
@@ -256,12 +255,28 @@
                     } else if (status === 'no_data') {
                         showStatus('未找到相关地点', 'error');
                     } else {
-                        var msg = '搜索失败，请重试';
-                        if (result && result.message) msg = result.message;
+                        var msg = '搜索失败';
+                        if (result && typeof result === 'string') msg = result;
+                        else if (result && result.message) msg = result.message;
+                        else if (result && result.info) msg = result.info;
                         showStatus(msg, 'error');
                     }
                 });
-            });
+            }
+
+            if (AMap.PlaceSearch) {
+                var ps = new AMap.PlaceSearch({ city: '深圳', pageSize: 10, extensions: 'all' });
+                doSearch(ps);
+            } else {
+                AMap.plugin('AMap.PlaceSearch', function() {
+                    if (!AMap.PlaceSearch) {
+                        showStatus('搜索插件加载失败，请刷新页面', 'error');
+                        return;
+                    }
+                    var ps = new AMap.PlaceSearch({ city: '深圳', pageSize: 10, extensions: 'all' });
+                    doSearch(ps);
+                });
+            }
         };
 
         function displaySearchResults(places) {

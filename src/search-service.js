@@ -17,14 +17,7 @@ export function searchPlace(keyword) {
             return;
         }
 
-        AMap.plugin('AMap.PlaceSearch', function() {
-            var ps = new AMap.PlaceSearch({
-                pageSize: 10,
-                pageIndex: 1,
-                city: '深圳',
-                extensions: 'all'
-            });
-
+        function doSearch(ps) {
             ps.search(keyword.trim(), function(status, result) {
                 if (status === 'complete' && result) {
                     if (result.poiList && result.poiList.pois && result.poiList.pois.length > 0) {
@@ -69,14 +62,42 @@ export function searchPlace(keyword) {
                 } else if (status === 'no_data') {
                     reject(new Error('未找到相关地点'));
                 } else {
-                    var errMsg = '搜索失败，请重试';
-                    if (result && result.message) {
+                    var errMsg = '搜索失败';
+                    if (result && typeof result === 'string') {
+                        errMsg = result;
+                    } else if (result && result.message) {
                         errMsg = result.message;
+                    } else if (result && result.info) {
+                        errMsg = result.info;
                     }
                     reject(new Error(errMsg));
                 }
             });
-        });
+        }
+
+        if (AMap.PlaceSearch) {
+            var ps = new AMap.PlaceSearch({
+                pageSize: 10,
+                pageIndex: 1,
+                city: '深圳',
+                extensions: 'all'
+            });
+            doSearch(ps);
+        } else {
+            AMap.plugin('AMap.PlaceSearch', function() {
+                if (!AMap.PlaceSearch) {
+                    reject(new Error('搜索插件加载失败，请刷新页面'));
+                    return;
+                }
+                var ps = new AMap.PlaceSearch({
+                    pageSize: 10,
+                    pageIndex: 1,
+                    city: '深圳',
+                    extensions: 'all'
+                });
+                doSearch(ps);
+            });
+        }
     });
 }
 
