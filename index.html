@@ -923,6 +923,12 @@
 
     <!-- 云开发 SDK -->
     <script src="https://imgcache.qq.com/qcloud/tcbjs/1.11.1/tcb.js" onerror="console.warn('云开发SDK加载失败')"></script>
+    <!-- 高德地图安全密钥配置（必须在地图API之前） -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '97fe5a9a15e1d7825db709593d0c69e1'
+        };
+    </script>
     <!-- 高德地图API -->
     <script src="https://webapi.amap.com/maps?v=1.4.15&key=9b110f6d6acaf2e12af4a985617579ff"></script>
     <!-- 模块化入口 -->
