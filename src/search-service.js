@@ -91,6 +91,33 @@ export function reverseGeocode(lng, lat) {
     });
 }
 
+export function ipLocate() {
+    return new Promise(function(resolve, reject) {
+        var url = 'https://restapi.amap.com/v3/ip?key=' + AMAP_REST_KEY;
+        fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.status === '1' && data.rectangle) {
+                    var parts = data.rectangle.split(';');
+                    if (parts.length === 2) {
+                        var lb = parts[0].split(',');
+                        var rt = parts[1].split(',');
+                        var lng = (parseFloat(lb[0]) + parseFloat(rt[0])) / 2;
+                        var lat = (parseFloat(lb[1]) + parseFloat(rt[1])) / 2;
+                        if (!isNaN(lng) && !isNaN(lat)) {
+                            resolve({ lng: lng, lat: lat, city: data.city || '', province: data.province || '' });
+                            return;
+                        }
+                    }
+                }
+                reject(new Error('IP定位失败'));
+            })
+            .catch(function(err) {
+                reject(new Error('IP定位请求失败：' + err.message));
+            });
+    });
+}
+
 export function searchNearbyMarkers(markers, lat, lng, radius) {
     if (!markers || markers.length === 0) {
         return [];

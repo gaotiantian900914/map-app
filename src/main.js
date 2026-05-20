@@ -7,7 +7,7 @@ import { initCloudBase } from './storage-service.js';
 import { initCategories, getCategories, getCategoryName, getCategoryColor, renderCategoryTable, openCategoryModal, closeCategoryModal, selectColor, saveCategoryFromModal, deleteCategoryById as removeCategoryById, updateCategoryFilter } from './category-service.js';
 import { initMarkers, getMarkers, addMarker as createMarker, deleteMarker as removeMarker, deleteMarkersBatch, searchMarkers, exportMarkers } from './marker-service.js';
 import { initMap, getMap, displayMarker, fitMapToMarkers as fitView, setMapCenter, focusOnMarker as focusMarker, drawSearchCircle, clearMapMarkers } from './map-service.js';
-import { searchPlace as doSearchPlace, searchNearbyMarkers, reverseGeocode } from './search-service.js';
+import { searchPlace as doSearchPlace, searchNearbyMarkers, reverseGeocode, ipLocate } from './search-service.js';
 import { showStatus, updateMarkerStats, highlightMarkerInList, showNearbyResults, renderMarkersTable, updateMarkerStatsPanel, updateBatchDeleteButton, switchTab as doSwitchTab } from './ui-service.js';
 import { exportToCSV, isValidCoordinate } from './utils.js';
 import { initSearchHistory, addSearchRecord, deleteSearchRecord, clearSearchHistory, renderSearchHistoryTable } from './search-history-service.js';
@@ -164,7 +164,7 @@ window.selectSearchResult = function(lng, lat, name) {
 window.locateMe = function() {
     const statusDiv = document.getElementById('locationStatus');
 
-    function onLocationSuccess(lng, lat, accuracy) {
+    function onLocationSuccess(lng, lat, accuracy, isIPLocate) {
         currentPosition = { lng: lng, lat: lat };
 
         reverseGeocode(lng, lat).then(function(geoResult) {
@@ -202,7 +202,7 @@ window.locateMe = function() {
                 offset: new AMap.Pixel(-15, -40)
             });
 
-            if (accuracy && accuracy > 0) {
+            if (!isIPLocate && accuracy && accuracy > 0) {
                 locationCircle = new AMap.Circle({
                     map: map,
                     center: [lng, lat],
@@ -215,11 +215,12 @@ window.locateMe = function() {
                 });
             }
 
-            setMapCenter(lng, lat, 16);
+            setMapCenter(lng, lat, isIPLocate ? 13 : 16);
 
             var infoContent = '<div style="padding: 8px; min-width: 150px;">' +
                 '<h4 style="margin: 0 0 5px 0; color: #333; font-size: 14px;">📍 ' + geoResult.name + '</h4>' +
                 '<p style="margin: 0; color: #999; font-size: 12px;">' + geoResult.address + '</p>' +
+                (isIPLocate ? '<p style="margin: 3px 0 0 0; color: #FF9800; font-size: 11px;">⚠️ IP定位，精度较低</p>' : '') +
                 '</div>';
 
             var infoWindow = new AMap.InfoWindow({
@@ -229,7 +230,13 @@ window.locateMe = function() {
 
             infoWindow.open(map, locationMarker.getPosition());
 
-            if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">✅ 定位成功</p>';
+            if (statusDiv) {
+                if (isIPLocate) {
+                    statusDiv.innerHTML = '<p style="color: #FF9800;">⚠️ IP定位成功（精度较低，建议在HTTPS环境下使用精确定位）</p>';
+                } else {
+                    statusDiv.innerHTML = '<p style="color: #4CAF50;">✅ 定位成功</p>';
+                }
+            }
         }).catch(function() {
             addSearchRecord({
                 type: 'location',
@@ -265,9 +272,24 @@ window.locateMe = function() {
                 offset: new AMap.Pixel(-15, -40)
             });
 
-            setMapCenter(lng, lat, 16);
+            setMapCenter(lng, lat, isIPLocate ? 13 : 16);
 
-            if (statusDiv) statusDiv.innerHTML = '<p style="color: #4CAF50;">✅ 定位成功</p>';
+            if (statusDiv) {
+                if (isIPLocate) {
+                    statusDiv.innerHTML = '<p style="color: #FF9800;">⚠️ IP定位成功（精度较低）</p>';
+                } else {
+                    statusDiv.innerHTML = '<p style="color: #4CAF50;">✅ 定位成功</p>';
+                }
+            }
+        });
+    }
+
+    function tryIPLocate() {
+        if (statusDiv) statusDiv.innerHTML = '<p style="color: #FF9800;">精确定位失败，尝试IP定位...</p>';
+        ipLocate().then(function(result) {
+            onLocationSuccess(result.lng, result.lat, 0, true);
+        }).catch(function(err) {
+            if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：所有定位方式均不可用。请检查网络连接或在HTTPS环境下使用。</p>';
         });
     }
 
@@ -279,21 +301,21 @@ window.locateMe = function() {
                 var lng = typeof result.position.getLng === 'function' ? result.position.getLng() : result.position.lng;
                 var lat = typeof result.position.getLat === 'function' ? result.position.getLat() : result.position.lat;
                 var accuracy = result.accuracy || 0;
-                onLocationSuccess(lng, lat, accuracy);
+                onLocationSuccess(lng, lat, accuracy, false);
             } else {
                 if (navigator.geolocation) {
                     if (statusDiv) statusDiv.innerHTML = '<p style="color: #FF9800;">高德定位失败，尝试浏览器定位...</p>';
                     navigator.geolocation.getCurrentPosition(
                         function(pos) {
-                            onLocationSuccess(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+                            onLocationSuccess(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy, false);
                         },
                         function(err) {
-                            if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：' + err.message + '</p>';
+                            tryIPLocate();
                         },
                         { enableHighAccuracy: true, timeout: 10000 }
                     );
                 } else {
-                    if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：' + (result.message || '未知错误') + '</p>';
+                    tryIPLocate();
                 }
             }
         });
@@ -301,15 +323,15 @@ window.locateMe = function() {
         if (statusDiv) statusDiv.innerHTML = '<p style="color: #2196F3;">正在定位...</p>';
         navigator.geolocation.getCurrentPosition(
             function(pos) {
-                onLocationSuccess(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+                onLocationSuccess(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy, false);
             },
             function(err) {
-                if (statusDiv) statusDiv.innerHTML = '<p style="color: #f44336;">定位失败：' + err.message + '</p>';
+                tryIPLocate();
             },
             { enableHighAccuracy: true, timeout: 10000 }
         );
     } else {
-        showStatus('定位服务不可用', 'error');
+        tryIPLocate();
     }
 };
 

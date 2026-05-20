@@ -170,7 +170,7 @@
         import { initMap, getMap, displayMarker, setMapCenter } from './src/map-service.js';
         import { isValidCoordinate } from './src/utils.js';
         import { initSearchHistory, addSearchRecord } from './src/search-history-service.js';
-        import { reverseGeocode } from './src/search-service.js';
+        import { reverseGeocode, ipLocate } from './src/search-service.js';
 
         let addPageCategories = [];
 
@@ -323,42 +323,68 @@
         };
 
         window.locateMyPosition = function() {
+            function onLocSuccess(lat, lng, isIP) {
+                setMapCenter(lng, lat, isIP ? 13 : 17);
+                document.getElementById('markerLng').value = lng;
+                document.getElementById('markerLat').value = lat;
+                enterPinningMode();
+
+                reverseGeocode(lng, lat).then(function(geoResult) {
+                    document.getElementById('markerName').value = geoResult.name;
+                    document.getElementById('markerDesc').value = geoResult.address;
+                    addSearchRecord({
+                        type: 'location',
+                        name: geoResult.name,
+                        address: geoResult.address,
+                        lat: lat,
+                        lng: lng,
+                        source: 'add'
+                    });
+                    if (isIP) {
+                        showStatus('⚠️ IP定位到：' + geoResult.name + '（精度较低，建议在HTTPS环境下使用精确定位）', 'info');
+                    } else {
+                        showStatus('已定位到：' + geoResult.name, 'success');
+                    }
+                }).catch(function() {
+                    addSearchRecord({
+                        type: 'location',
+                        name: '我的位置',
+                        address: lat.toFixed(6) + ', ' + lng.toFixed(6),
+                        lat: lat,
+                        lng: lng,
+                        source: 'add'
+                    });
+                    if (isIP) {
+                        showStatus('⚠️ IP定位成功（精度较低）', 'info');
+                    } else {
+                        showStatus('已定位到您的位置', 'success');
+                    }
+                });
+            }
+
+            function tryIPLocate() {
+                showStatus('精确定位失败，尝试IP定位...', 'info');
+                ipLocate().then(function(result) {
+                    onLocSuccess(result.lat, result.lng, true);
+                }).catch(function(err) {
+                    showStatus('定位失败：所有定位方式均不可用。请检查网络或在HTTPS环境下使用。', 'error');
+                });
+            }
+
             if (navigator.geolocation) {
+                showStatus('正在定位...', 'info');
                 navigator.geolocation.getCurrentPosition(
                     function(pos) {
-                        const lat = pos.coords.latitude; const lng = pos.coords.longitude;
-                        setMapCenter(lng, lat, 17);
-                        document.getElementById('markerLng').value = lng;
-                        document.getElementById('markerLat').value = lat;
-                        enterPinningMode();
-
-                        reverseGeocode(lng, lat).then(function(geoResult) {
-                            document.getElementById('markerName').value = geoResult.name;
-                            document.getElementById('markerDesc').value = geoResult.address;
-                            addSearchRecord({
-                                type: 'location',
-                                name: geoResult.name,
-                                address: geoResult.address,
-                                lat: lat,
-                                lng: lng,
-                                source: 'add'
-                            });
-                            showStatus('已定位到：' + geoResult.name, 'success');
-                        }).catch(function() {
-                            addSearchRecord({
-                                type: 'location',
-                                name: '我的位置',
-                                address: lat.toFixed(6) + ', ' + lng.toFixed(6),
-                                lat: lat,
-                                lng: lng,
-                                source: 'add'
-                            });
-                            showStatus('已定位到您的位置', 'success');
-                        });
+                        onLocSuccess(pos.coords.latitude, pos.coords.longitude, false);
                     },
-                    function(err) { showStatus('定位失败：' + err.message, 'error'); }
+                    function(err) {
+                        tryIPLocate();
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
-            } else { showStatus('浏览器不支持定位', 'error'); }
+            } else {
+                tryIPLocate();
+            }
         };
 
         function enterPinningMode() {
