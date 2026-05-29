@@ -557,13 +557,35 @@ document.addEventListener('change', function(e) {
 window.filterHistory = function() {
     const typeFilter = document.getElementById('historyTypeFilter');
     const searchInput = document.getElementById('historySearchInput');
+    const startDateInput = document.getElementById('historyStartDate');
+    const endDateInput = document.getElementById('historyEndDate');
 
     const criteria = {
         type: typeFilter ? typeFilter.value : 'all',
-        keyword: searchInput ? searchInput.value.trim() : ''
+        keyword: searchInput ? searchInput.value.trim() : '',
+        startDate: startDateInput ? startDateInput.value : '',
+        endDate: endDateInput ? endDateInput.value : ''
     };
 
-    renderSearchHistoryTable(criteria);
+    renderSearchHistoryTable(criteria, 1);
+};
+
+window.gotoHistoryPage = function(page) {
+    renderSearchHistoryTable(null, page);
+};
+
+window.resetHistoryFilter = function() {
+    const typeFilter = document.getElementById('historyTypeFilter');
+    const searchInput = document.getElementById('historySearchInput');
+    const startDateInput = document.getElementById('historyStartDate');
+    const endDateInput = document.getElementById('historyEndDate');
+
+    if (typeFilter) typeFilter.value = 'all';
+    if (searchInput) searchInput.value = '';
+    if (startDateInput) startDateInput.value = '';
+    if (endDateInput) endDateInput.value = '';
+
+    renderSearchHistoryTable({}, 1);
 };
 
 window.deleteHistoryRecord = function(id) {

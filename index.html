@@ -891,25 +891,44 @@
         <!-- 搜索记录视图内容 -->
         <div id="historyView" class="main-content" style="display: none;">
             <div style="width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
                     <h2 style="color: #333; margin: 0;">🔍 搜索记录</h2>
-                    <div style="display: flex; gap: 0; align-items: center; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white;">
-                        <select id="historyTypeFilter" onchange="filterHistory()" style="padding: 8px 12px; border: none; font-size: 13px; min-width: 100px; outline: none; background: #f8f9fa;">
-                            <option value="all">全部类型</option>
-                            <option value="search">🔎 搜索</option>
-                            <option value="location">📍 定位</option>
-                        </select>
-                        <input type="text" id="historySearchInput" placeholder="🔍 搜索名称/地址..." oninput="filterHistory()" style="padding: 8px 12px; border: none; border-left: 1px solid #e0e0e0; font-size: 13px; min-width: 180px; outline: none;">
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-danger" onclick="clearAllHistory()" style="padding: 8px 16px; margin: 0; font-size: 13px;">🗑️ 清空记录</button>
+                    <button class="btn btn-danger" onclick="clearAllHistory()" style="padding: 8px 16px; margin: 0; font-size: 13px;">🗑️ 清空记录</button>
+                </div>
+
+                <div style="background: white; border-radius: 12px; padding: 18px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 120px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 4px;">类型筛选</label>
+                            <select id="historyTypeFilter" onchange="filterHistory()" style="width: 100%; padding: 8px 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; outline: none; background: #fafafa;">
+                                <option value="all">全部类型</option>
+                                <option value="search">🔎 搜索</option>
+                                <option value="location">📍 定位</option>
+                            </select>
+                        </div>
+                        <div style="flex: 2; min-width: 180px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 4px;">关键词搜索</label>
+                            <input type="text" id="historySearchInput" placeholder="搜索名称/地址/关键词..." oninput="filterHistory()" style="width: 100%; padding: 8px 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; outline: none; background: #fafafa;">
+                        </div>
+                        <div style="min-width: 140px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 4px;">开始日期</label>
+                            <input type="date" id="historyStartDate" onchange="filterHistory()" style="width: 100%; padding: 8px 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; outline: none; background: #fafafa;">
+                        </div>
+                        <div style="min-width: 140px;">
+                            <label style="display: block; font-size: 12px; color: #888; margin-bottom: 4px;">结束日期</label>
+                            <input type="date" id="historyEndDate" onchange="filterHistory()" style="width: 100%; padding: 8px 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; outline: none; background: #fafafa;">
+                        </div>
+                        <button onclick="resetHistoryFilter()" style="padding: 8px 14px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 8px; cursor: pointer; font-size: 12px; white-space: nowrap; transition: all 0.2s;" onmouseover="this.style.borderColor='#667eea'; this.style.color='#667eea'" onmouseout="this.style.borderColor='#e0e0e0'; this.style.color='#666'">🔄 重置</button>
                     </div>
                 </div>
 
-                <div id="historyStats" style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
+                <div id="historyStats" style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding: 15px 20px; border-radius: 10px; margin-bottom: 16px; display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
                 </div>
 
-                <div id="historyCardList" style="display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 550px; overflow-y: auto; padding-right: 5px;">
+                <div id="historyCardList" style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                </div>
+
+                <div id="historyPagination" style="margin-top: 10px;">
                 </div>
 
                 <div id="historyEmptyState" style="display: none; text-align: center; padding: 60px 20px; color: #999;">
