@@ -880,24 +880,27 @@
                 <div id="markerStats" style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
                 </div>
 
-                <div class="table-content" style="overflow-x: auto; max-height: 500px; overflow-y: auto; border-radius: 10px; border: 1px solid #eee;">
-                    <table id="markersTable" style="width: 100%; border-collapse: collapse;">
-                        <thead style="position: sticky; top: 0; z-index: 10;">
-                            <tr>
-                                <th style="text-align: center; width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="width: 16px; height: 16px; cursor: pointer;"></th>
-                                <th style="width: 50px;">#</th>
-                                <th style="min-width: 150px;">名称</th>
-                                <th style="width: 100px;">分类</th>
-                                <th style="min-width: 160px;">描述</th>
-                                <th style="min-width: 140px;">经度</th>
-                                <th style="min-width: 120px;">纬度</th>
-                                <th style="width: 140px;">创建时间</th>
-                                <th style="width: 120px; text-align: center;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="markersTableBody">
-                        </tbody>
-                    </table>
+                <div style="border-radius: 10px; border: 1px solid #eee; background: white; overflow: hidden;">
+                    <div class="table-content" style="overflow-x: auto; max-height: 500px; overflow-y: auto;">
+                        <table id="markersTable" style="width: 100%; border-collapse: collapse;">
+                            <thead style="position: sticky; top: 0; z-index: 10;">
+                                <tr>
+                                    <th style="text-align: center; width: 40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="width: 16px; height: 16px; cursor: pointer;"></th>
+                                    <th style="width: 50px;">#</th>
+                                    <th style="min-width: 150px;">名称</th>
+                                    <th style="width: 100px;">分类</th>
+                                    <th style="min-width: 160px;">描述</th>
+                                    <th style="min-width: 140px;">经度</th>
+                                    <th style="min-width: 120px;">纬度</th>
+                                    <th style="width: 140px;">创建时间</th>
+                                    <th style="width: 120px; text-align: center;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="markersTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="markerPagination" style="padding: 10px 15px; border-top: 1px solid #f0f0f0; background: white;"></div>
                 </div>
                 <div id="noMarkersMessage" style="display: none; text-align: center; padding: 60px 20px; color: #999;">
                     <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
