@@ -118,6 +118,8 @@ export function showNearbyResults(nearbyMarkers, radius, getCategoryName, getCat
     listDiv.innerHTML = html;
 }
 
+let markerSort = { field: 'createdAt', order: 'desc' };
+
 export function renderMarkersTable(markers, getCategoryName, getCategoryColor) {
     const tbody = document.getElementById('markersTableBody');
     const noMsg = document.getElementById('noMarkersMessage');
@@ -135,7 +137,38 @@ export function renderMarkersTable(markers, getCategoryName, getCategoryColor) {
     if (noMsg) noMsg.style.display = 'none';
     if (tableContent) tableContent.style.display = '';
 
-    tbody.innerHTML = markers.map(function(marker, index) {
+    var sorted = markers.slice().sort(function(a, b) {
+        var va = a[markerSort.field] || '';
+        var vb = b[markerSort.field] || '';
+        if (markerSort.field === 'createdAt') {
+            va = new Date(va).getTime() || 0;
+            vb = new Date(vb).getTime() || 0;
+            return markerSort.order === 'asc' ? va - vb : vb - va;
+        }
+        va = va.toString().toLowerCase();
+        vb = vb.toString().toLowerCase();
+        if (va < vb) return markerSort.order === 'asc' ? -1 : 1;
+        if (va > vb) return markerSort.order === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    var nameArrow = getMarkerSortArrow('name');
+    var timeArrow = getMarkerSortArrow('createdAt');
+
+    var thead = tbody.closest('table').querySelector('thead tr');
+    if (thead) {
+        var ths = thead.querySelectorAll('th');
+        ths[2].innerHTML = '名称 ' + nameArrow;
+        ths[2].style.cursor = 'pointer';
+        ths[2].style.userSelect = 'none';
+        ths[2].onclick = function() { window.sortMarkers('name'); };
+        ths[7].innerHTML = '创建时间 ' + timeArrow;
+        ths[7].style.cursor = 'pointer';
+        ths[7].style.userSelect = 'none';
+        ths[7].onclick = function() { window.sortMarkers('createdAt'); };
+    }
+
+    tbody.innerHTML = sorted.map(function(marker, index) {
         const categoryName = getCategoryName(marker.categoryId);
         const categoryColor = getColorValue(getCategoryColor(marker.categoryId));
 
@@ -154,6 +187,21 @@ export function renderMarkersTable(markers, getCategoryName, getCategoryColor) {
             '</div></td>' +
         '</tr>';
     }).join('');
+}
+
+function getMarkerSortArrow(field) {
+    if (markerSort.field !== field) return '<span style="color: #ccc; font-size: 10px;">▲▼</span>';
+    if (markerSort.order === 'asc') return '<span style="color: #667eea; font-size: 10px;">▲</span><span style="color: #ccc; font-size: 10px;">▼</span>';
+    return '<span style="color: #ccc; font-size: 10px;">▲</span><span style="color: #667eea; font-size: 10px;">▼</span>';
+}
+
+export function setMarkerSort(field) {
+    if (markerSort.field === field) {
+        markerSort.order = markerSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        markerSort.field = field;
+        markerSort.order = field === 'createdAt' ? 'desc' : 'asc';
+    }
 }
 
 export function updateMarkerStatsPanel(markers, categories) {

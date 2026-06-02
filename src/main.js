@@ -8,9 +8,9 @@ import { initCategories, getCategories, getCategoryName, getCategoryColor, rende
 import { initMarkers, getMarkers, addMarker as createMarker, deleteMarker as removeMarker, deleteMarkersBatch, searchMarkers, exportMarkers } from './marker-service.js';
 import { initMap, getMap, displayMarker, fitMapToMarkers as fitView, setMapCenter, focusOnMarker as focusMarker, drawSearchCircle, clearMapMarkers } from './map-service.js';
 import { searchPlace as doSearchPlace, searchNearbyMarkers, reverseGeocode, ipLocate } from './search-service.js';
-import { showStatus, updateMarkerStats, highlightMarkerInList, showNearbyResults, renderMarkersTable, updateMarkerStatsPanel, updateBatchDeleteButton, switchTab as doSwitchTab } from './ui-service.js';
+import { showStatus, updateMarkerStats, highlightMarkerInList, showNearbyResults, renderMarkersTable, updateMarkerStatsPanel, updateBatchDeleteButton, switchTab as doSwitchTab, setMarkerSort } from './ui-service.js';
 import { exportToCSV, isValidCoordinate } from './utils.js';
-import { initSearchHistory, addSearchRecord, deleteSearchRecord, clearSearchHistory, renderSearchHistoryTable } from './search-history-service.js';
+import { initSearchHistory, addSearchRecord, deleteSearchRecord, clearSearchHistory, renderSearchHistoryTable, setHistorySort } from './search-history-service.js';
 
 let currentPosition = null;
 let searchCircle = null;
@@ -586,6 +586,17 @@ window.resetHistoryFilter = function() {
     if (endDateInput) endDateInput.value = '';
 
     renderSearchHistoryTable({}, 1);
+};
+
+window.sortHistory = function(field) {
+    setHistorySort(field);
+};
+
+window.sortMarkers = function(field) {
+    setMarkerSort(field);
+    const markers = getMarkers();
+    const categories = getCategories();
+    renderMarkersTable(markers, getCategoryName, getCategoryColor);
 };
 
 window.deleteHistoryRecord = function(id) {

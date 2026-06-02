@@ -7,6 +7,7 @@ const PAGE_SIZE = 10;
 let historyList = [];
 let currentPage = 1;
 let currentCriteria = {};
+let currentSort = { field: 'createdAt', order: 'desc' };
 
 export function initSearchHistory() {
     try {
@@ -136,17 +137,20 @@ function saveHistory() {
 }
 
 export function renderSearchHistoryTable(criteria, page) {
-    var cardList = document.getElementById('historyCardList');
+    var tableContainer = document.getElementById('historyTableContainer');
     var emptyState = document.getElementById('historyEmptyState');
     var statsDiv = document.getElementById('historyStats');
     var paginationDiv = document.getElementById('historyPagination');
 
-    if (!cardList) return;
+    if (!tableContainer) return;
 
     if (criteria) currentCriteria = criteria;
     if (page) currentPage = page;
 
     var filtered = filterSearchHistory(currentCriteria);
+
+    filtered = sortRecords(filtered, currentSort.field, currentSort.order);
+
     var stats = getSearchHistoryStats();
 
     if (statsDiv) {
@@ -167,8 +171,8 @@ export function renderSearchHistoryTable(criteria, page) {
     }
 
     if (filtered.length === 0) {
-        cardList.innerHTML = '';
-        if (emptyState) emptyState.style.display = 'block';
+        tableContainer.innerHTML = '';
+        if (emptyState) emptyState.style.display = 'flex';
         if (paginationDiv) paginationDiv.innerHTML = '';
         return;
     }
@@ -183,48 +187,48 @@ export function renderSearchHistoryTable(criteria, page) {
     var endIdx = Math.min(startIdx + PAGE_SIZE, filtered.length);
     var pageData = filtered.slice(startIdx, endIdx);
 
-    cardList.innerHTML = pageData.map(function(record, idx) {
+    var nameArrow = getSortArrow('name');
+    var timeArrow = getSortArrow('createdAt');
+
+    var html = '<table style="width: 100%; border-collapse: separate; border-spacing: 0;">' +
+        '<thead style="position: sticky; top: 0; z-index: 10;">' +
+            '<tr>' +
+                '<th style="width: 50px; text-align: center; border-radius: 8px 0 0 0;">#</th>' +
+                '<th style="width: 70px;">类型</th>' +
+                '<th style="min-width: 150px; cursor: pointer; user-select: none;" onclick="window.sortHistory(\'name\')">名称 ' + nameArrow + '</th>' +
+                '<th style="min-width: 200px;">地址</th>' +
+                '<th style="width: 100px;">来源</th>' +
+                '<th style="width: 160px; cursor: pointer; user-select: none;" onclick="window.sortHistory(\'createdAt\')">时间 ' + timeArrow + '</th>' +
+                '<th style="width: 120px; text-align: center; border-radius: 0 8px 0 0;">操作</th>' +
+            '</tr>' +
+        '</thead>' +
+        '<tbody>';
+
+    pageData.forEach(function(record, idx) {
         var typeIcon = record.type === 'location' ? '📍' : '🔎';
         var typeLabel = record.type === 'location' ? '定位' : '搜索';
         var typeBg = record.type === 'location' ? '#2196F3' : '#FF9800';
-        var typeBgLight = record.type === 'location' ? 'rgba(33,150,243,0.08)' : 'rgba(255,152,0,0.08)';
         var sourceLabel = record.source === 'add' ? '新增标注页' : '地图视图';
         var timeStr = formatTime(record.createdAt);
         var fullTime = formatFullTime(record.createdAt);
         var globalIdx = startIdx + idx + 1;
 
-        return '<div style="background: white; border-radius: 12px; border: 1px solid #f0f0f0; padding: 16px 18px; transition: all 0.2s; position: relative;" ' +
-            'onmouseover="this.style.borderColor=\'#667eea\'; this.style.boxShadow=\'0 4px 16px rgba(102,126,234,0.12)\'" ' +
-            'onmouseout="this.style.borderColor=\'#f0f0f0\'; this.style.boxShadow=\'none\'">' +
-            '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
-                '<div style="display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 0;">' +
-                    '<div style="width: 40px; height: 40px; background: ' + typeBgLight + '; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;">' + typeIcon + '</div>' +
-                    '<div style="flex: 1; min-width: 0;">' +
-                        '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">' +
-                            '<span style="font-weight: 600; font-size: 15px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px;">' + escapeHtml(record.name || record.keyword || '未知地点') + '</span>' +
-                            '<span style="display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 10px; color: white; background: ' + typeBg + '; flex-shrink: 0;">' + typeLabel + '</span>' +
-                        '</div>' +
-                        (record.address ? '<div style="font-size: 12px; color: #888; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📍 ' + escapeHtml(record.address) + '</div>' : '') +
-                        '<div style="display: flex; align-items: center; gap: 12px; font-size: 11px; color: #bbb;">' +
-                            (record.keyword && record.keyword !== record.name ? '<span>关键词: ' + escapeHtml(record.keyword) + '</span>' : '') +
-                            '<span>' + sourceLabel + '</span>' +
-                            '<span title="' + fullTime + '">' + timeStr + '</span>' +
-                        '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: 10px;">' +
-                    '<button onclick="window.gotoHistoryLocation(' + record.lng + ', ' + record.lat + ', \'' + escapeHtml((record.name || '').replace(/'/g, "\\'")) + '\')" ' +
-                        'style="padding: 6px 12px; border: 1px solid #667eea; background: white; color: #667eea; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s; white-space: nowrap;" ' +
-                        'onmouseover="this.style.background=\'#667eea\'; this.style.color=\'white\'" ' +
-                        'onmouseout="this.style.background=\'white\'; this.style.color=\'#667eea\'">📍 前往</button>' +
-                    '<button onclick="window.deleteHistoryRecord(\'' + escapeHtml(record.id) + '\')" ' +
-                        'style="padding: 6px 8px; border: 1px solid #eee; background: white; color: #ccc; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.2s;" ' +
-                        'onmouseover="this.style.borderColor=\'#f44336\'; this.style.color=\'#f44336\'; this.style.background=\'#fff5f5\'" ' +
-                        'onmouseout="this.style.borderColor=\'#eee\'; this.style.color=\'#ccc\'; this.style.background=\'white\'">✕</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
-    }).join('');
+        html += '<tr style="border-bottom: 1px solid #f0f0f0; transition: background 0.2s;" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'white\'">' +
+            '<td style="text-align: center; padding: 12px 8px; color: #999; font-size: 12px;">' + globalIdx + '</td>' +
+            '<td style="padding: 12px 8px;"><span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; color: white; background: ' + typeBg + ';">' + typeIcon + ' ' + typeLabel + '</span></td>' +
+            '<td style="padding: 12px 8px; font-weight: 500; color: #333; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(record.name || record.keyword || '未知地点') + '</td>' +
+            '<td style="padding: 12px 8px; color: #888; font-size: 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(record.address || '-') + '</td>' +
+            '<td style="padding: 12px 8px; font-size: 12px; color: #999;">' + sourceLabel + '</td>' +
+            '<td style="padding: 12px 8px; font-size: 12px; color: #999;" title="' + fullTime + '">' + timeStr + '</td>' +
+            '<td style="padding: 12px 8px; text-align: center;"><div class="action-btns" style="justify-content: center;">' +
+                '<button class="btn-view" onclick="window.gotoHistoryLocation(' + record.lng + ', ' + record.lat + ', \'' + escapeHtml((record.name || '').replace(/'/g, "\\'")) + '\')" style="padding: 4px 10px; font-size: 11px;">📍 前往</button>' +
+                '<button class="btn-delete-small" onclick="window.deleteHistoryRecord(\'' + escapeHtml(record.id) + '\')" style="padding: 4px 10px; font-size: 11px;">🗑️</button>' +
+            '</div></td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table>';
+    tableContainer.innerHTML = html;
 
     if (paginationDiv) {
         if (totalPages <= 1) {
@@ -264,6 +268,40 @@ export function renderSearchHistoryTable(criteria, page) {
             paginationDiv.innerHTML = pHtml;
         }
     }
+}
+
+function sortRecords(records, field, order) {
+    return records.slice().sort(function(a, b) {
+        var va = a[field] || '';
+        var vb = b[field] || '';
+        if (field === 'createdAt') {
+            va = new Date(va).getTime() || 0;
+            vb = new Date(vb).getTime() || 0;
+            return order === 'asc' ? va - vb : vb - va;
+        }
+        va = va.toString().toLowerCase();
+        vb = vb.toString().toLowerCase();
+        if (va < vb) return order === 'asc' ? -1 : 1;
+        if (va > vb) return order === 'asc' ? 1 : -1;
+        return 0;
+    });
+}
+
+function getSortArrow(field) {
+    if (currentSort.field !== field) return '<span style="color: #ccc; font-size: 10px;">▲▼</span>';
+    if (currentSort.order === 'asc') return '<span style="color: #667eea; font-size: 10px;">▲</span><span style="color: #ccc; font-size: 10px;">▼</span>';
+    return '<span style="color: #ccc; font-size: 10px;">▲</span><span style="color: #667eea; font-size: 10px;">▼</span>';
+}
+
+export function setHistorySort(field) {
+    if (currentSort.field === field) {
+        currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.field = field;
+        currentSort.order = field === 'createdAt' ? 'desc' : 'asc';
+    }
+    currentPage = 1;
+    renderSearchHistoryTable(null, 1);
 }
 
 function formatTime(isoStr) {
