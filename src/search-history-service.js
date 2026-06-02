@@ -190,7 +190,7 @@ export function renderSearchHistoryTable(criteria, page) {
     var nameArrow = getSortArrow('name');
     var timeArrow = getSortArrow('createdAt');
 
-    var html = '<table style="width: 100%; border-collapse: separate; border-spacing: 0;">' +
+    var html = '<table style="width: 100%; border-collapse: separate; border-spacing: 0; background: white;">' +
         '<thead style="position: sticky; top: 0; z-index: 10;">' +
             '<tr>' +
                 '<th style="width: 50px; text-align: center; border-radius: 8px 0 0 0;">#</th>' +
