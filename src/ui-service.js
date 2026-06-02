@@ -210,69 +210,71 @@ export function renderMarkersTable(markers, getCategoryName, getCategoryColor, p
     }).join('');
 
     if (paginationDiv) {
+        var sizeSelect = '<select id="markerPageSize" onchange="window.changeMarkerPageSize()" style="padding: 5px 8px; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 12px; outline: none; background: white; cursor: pointer; color: #333;">' +
+            '<option value="5"' + (pageSize === 5 ? ' selected' : '') + '>5</option>' +
+            '<option value="10"' + (pageSize === 10 ? ' selected' : '') + '>10</option>' +
+            '<option value="15"' + (pageSize === 15 ? ' selected' : '') + '>15</option>' +
+            '<option value="20"' + (pageSize === 20 ? ' selected' : '') + '>20</option>' +
+            '<option value="50"' + (pageSize === 50 ? ' selected' : '') + '>50</option>' +
+            '<option value="100"' + (pageSize === 100 ? ' selected' : '') + '>100</option>' +
+        '</select>';
+
+        var pageInfo = '共 <b style="color: #667eea;">' + sorted.length + '</b> 条';
+
         if (totalPages <= 1) {
-            paginationDiv.innerHTML = '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' +
-                '<div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #666;">' +
-                    '<span>每页</span>' +
-                    '<select id="markerPageSize" onchange="window.changeMarkerPageSize()" style="padding: 4px 6px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 12px; outline: none; background: #fafafa; cursor: pointer;">' +
-                        '<option value="5"' + (pageSize === 5 ? ' selected' : '') + '>5</option>' +
-                        '<option value="10"' + (pageSize === 10 ? ' selected' : '') + '>10</option>' +
-                        '<option value="15"' + (pageSize === 15 ? ' selected' : '') + '>15</option>' +
-                        '<option value="20"' + (pageSize === 20 ? ' selected' : '') + '>20</option>' +
-                        '<option value="50"' + (pageSize === 50 ? ' selected' : '') + '>50</option>' +
-                        '<option value="100"' + (pageSize === 100 ? ' selected' : '') + '>100</option>' +
-                    '</select>' +
-                    '<span>条</span>' +
-                '</div>' +
-                '<span style="font-size: 12px; color: #999;">共 ' + sorted.length + ' 条记录</span>' +
-            '</div>';
+            paginationDiv.innerHTML =
+                '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                    '<div style="font-size: 12px; color: #888;">' + pageInfo + '</div>' +
+                    '<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #888;">每页 ' + sizeSelect + ' 条</div>' +
+                '</div>';
         } else {
-            var pHtml = '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">';
+            var pHtml = '<div style="display: flex; justify-content: space-between; align-items: center;">';
 
-            pHtml += '<div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #666;">' +
-                '<span>每页</span>' +
-                '<select id="markerPageSize" onchange="window.changeMarkerPageSize()" style="padding: 4px 6px; border: 1px solid #e0e0e0; border-radius: 4px; font-size: 12px; outline: none; background: #fafafa; cursor: pointer;">' +
-                    '<option value="5"' + (pageSize === 5 ? ' selected' : '') + '>5</option>' +
-                    '<option value="10"' + (pageSize === 10 ? ' selected' : '') + '>10</option>' +
-                    '<option value="15"' + (pageSize === 15 ? ' selected' : '') + '>15</option>' +
-                    '<option value="20"' + (pageSize === 20 ? ' selected' : '') + '>20</option>' +
-                    '<option value="50"' + (pageSize === 50 ? ' selected' : '') + '>50</option>' +
-                    '<option value="100"' + (pageSize === 100 ? ' selected' : '') + '>100</option>' +
-                '</select>' +
-                '<span>条</span>' +
+            pHtml += '<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888;">' +
+                '<span>' + pageInfo + '</span>' +
+                '<span style="color: #ddd;">|</span>' +
+                '<span>每页 ' + sizeSelect + ' 条</span>' +
             '</div>';
 
-            pHtml += '<div style="display: flex; justify-content: center; align-items: center; gap: 6px; flex-wrap: wrap;">';
+            pHtml += '<div style="display: flex; align-items: center; gap: 4px;">';
 
             pHtml += '<button onclick="window.gotoMarkerPage(1)" ' + (markerPage === 1 ? 'disabled' : '') +
-                ' style="padding: 6px 10px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === 1 ? ' opacity: 0.4; cursor: not-allowed;' : '') + '">首页</button>';
+                ' style="padding: 5px 10px; border: 1px solid #e0e0e0; background: white; color: #888; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === 1 ? ' opacity: 0.35; cursor: not-allowed;' : '') + '">«</button>';
 
             pHtml += '<button onclick="window.gotoMarkerPage(' + (markerPage - 1) + ')" ' + (markerPage === 1 ? 'disabled' : '') +
-                ' style="padding: 6px 10px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === 1 ? ' opacity: 0.4; cursor: not-allowed;' : '') + '">上一页</button>';
+                ' style="padding: 5px 10px; border: 1px solid #e0e0e0; background: white; color: #888; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === 1 ? ' opacity: 0.35; cursor: not-allowed;' : '') + '">‹</button>';
 
             var sp = Math.max(1, markerPage - 2);
             var ep = Math.min(totalPages, markerPage + 2);
-            if (sp > 1) pHtml += '<span style="color: #999; font-size: 12px;">...</span>';
+            if (sp > 1) {
+                pHtml += '<button onclick="window.gotoMarkerPage(1)" style="padding: 5px 10px; border: 1px solid #e0e0e0; background: white; color: #888; border-radius: 6px; cursor: pointer; font-size: 12px;">1</button>';
+                if (sp > 2) pHtml += '<span style="color: #ccc; font-size: 12px; padding: 0 2px;">···</span>';
+            }
 
             for (var p = sp; p <= ep; p++) {
                 if (p === markerPage) {
-                    pHtml += '<button style="padding: 6px 12px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; min-width: 36px;">' + p + '</button>';
+                    pHtml += '<button style="padding: 5px 12px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; min-width: 32px;">' + p + '</button>';
                 } else {
-                    pHtml += '<button onclick="window.gotoMarkerPage(' + p + ')" style="padding: 6px 12px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px; min-width: 36px;">' + p + '</button>';
+                    pHtml += '<button onclick="window.gotoMarkerPage(' + p + ')" style="padding: 5px 10px; border: 1px solid #e0e0e0; background: white; color: #888; border-radius: 6px; cursor: pointer; font-size: 12px; min-width: 32px;">' + p + '</button>';
                 }
             }
 
-            if (ep < totalPages) pHtml += '<span style="color: #999; font-size: 12px;">...</span>';
+            if (ep < totalPages) {
+                if (ep < totalPages - 1) pHtml += '<span style="color: #ccc; font-size: 12px; padding: 0 2px;">···</span>';
+                pHtml += '<button onclick="window.gotoMarkerPage(' + totalPages + ')" style="padding: 5px 10px; border: 1px solid #e0e0e0; background: white; color: #888; border-radius: 6px; cursor: pointer; font-size: 12px;">' + totalPages + '</button>';
+            }
 
             pHtml += '<button onclick="window.gotoMarkerPage(' + (markerPage + 1) + ')" ' + (markerPage === totalPages ? 'disabled' : '') +
-                ' style="padding: 6px 10px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === totalPages ? ' opacity: 0.4; cursor: not-allowed;' : '') + '">下一页</button>';
+                ' style="padding: 5px 10px; border: 1px solid #e0e0e0; background: white; color: #888; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === totalPages ? ' opacity: 0.35; cursor: not-allowed;' : '') + '">›</button>';
 
             pHtml += '<button onclick="window.gotoMarkerPage(' + totalPages + ')" ' + (markerPage === totalPages ? 'disabled' : '') +
-                ' style="padding: 6px 10px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === totalPages ? ' opacity: 0.4; cursor: not-allowed;' : '') + '">末页</button>';
+                ' style="padding: 5px 10px; border: 1px solid #e0e0e0; background: white; color: #888; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === totalPages ? ' opacity: 0.35; cursor: not-allowed;' : '') + '">»</button>';
 
-            pHtml += '<span style="font-size: 12px; color: #999; margin-left: 8px;">第 ' + markerPage + '/' + totalPages + ' 页，共 ' + sorted.length + ' 条</span>';
+            pHtml += '</div>';
 
-            pHtml += '</div></div>';
+            pHtml += '<span style="font-size: 12px; color: #aaa;">' + markerPage + ' / ' + totalPages + '</span>';
+
+            pHtml += '</div>';
             paginationDiv.innerHTML = pHtml;
         }
     }
