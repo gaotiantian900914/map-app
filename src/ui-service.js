@@ -219,22 +219,18 @@ export function renderMarkersTable(markers, getCategoryName, getCategoryColor, p
             '<option value="100"' + (pageSize === 100 ? ' selected' : '') + '>100</option>' +
         '</select>';
 
-        var pageInfo = '共 <b style="color: #667eea;">' + sorted.length + '</b> 条';
-
         if (totalPages <= 1) {
             paginationDiv.innerHTML =
                 '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-                    '<div style="font-size: 12px; color: #888;">' + pageInfo + '</div>' +
-                    '<div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #888;">每页 ' + sizeSelect + ' 条</div>' +
+                    '<span style="font-size: 12px; color: #888;">共 <b style="color: #667eea;">' + sorted.length + '</b> 条</span>' +
+                    '<span style="font-size: 12px; color: #888;">每页 ' + sizeSelect + ' 条</span>' +
                 '</div>';
         } else {
             var pHtml = '<div style="display: flex; justify-content: space-between; align-items: center;">';
 
-            pHtml += '<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #888;">' +
-                '<span>' + pageInfo + '</span>' +
-                '<span style="color: #ddd;">|</span>' +
-                '<span>每页 ' + sizeSelect + ' 条</span>' +
-            '</div>';
+            pHtml += '<span style="font-size: 12px; color: #888;">共 <b style="color: #667eea;">' + sorted.length + '</b> 条</span>';
+
+            pHtml += '<div style="display: flex; align-items: center; gap: 8px;">';
 
             pHtml += '<div style="display: flex; align-items: center; gap: 4px;">';
 
@@ -272,9 +268,13 @@ export function renderMarkersTable(markers, getCategoryName, getCategoryColor, p
 
             pHtml += '</div>';
 
-            pHtml += '<span style="font-size: 12px; color: #aaa;">' + markerPage + ' / ' + totalPages + '</span>';
+            pHtml += '<span style="font-size: 12px; color: #aaa;">' + markerPage + '/' + totalPages + '</span>';
 
-            pHtml += '</div>';
+            pHtml += '<span style="color: #ddd;">|</span>';
+
+            pHtml += '<span style="font-size: 12px; color: #888;">每页 ' + sizeSelect + ' 条</span>';
+
+            pHtml += '</div></div>';
             paginationDiv.innerHTML = pHtml;
         }
     }
