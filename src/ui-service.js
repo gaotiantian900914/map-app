@@ -120,7 +120,12 @@ export function showNearbyResults(nearbyMarkers, radius, getCategoryName, getCat
 
 let markerSort = { field: 'createdAt', order: 'desc' };
 let markerPage = 1;
-const MARKER_PAGE_SIZE = 15;
+
+function getMarkerPageSize() {
+    var sel = document.getElementById('markerPageSize');
+    if (sel) return parseInt(sel.value) || 15;
+    return 15;
+}
 
 export function renderMarkersTable(markers, getCategoryName, getCategoryColor, page) {
     const tbody = document.getElementById('markersTableBody');
@@ -174,12 +179,13 @@ export function renderMarkersTable(markers, getCategoryName, getCategoryColor, p
         ths[7].onclick = function() { window.sortMarkers('createdAt'); };
     }
 
-    var totalPages = Math.ceil(sorted.length / MARKER_PAGE_SIZE);
+    var pageSize = getMarkerPageSize();
+    var totalPages = Math.ceil(sorted.length / pageSize);
     if (markerPage > totalPages) markerPage = totalPages;
     if (markerPage < 1) markerPage = 1;
 
-    var startIdx = (markerPage - 1) * MARKER_PAGE_SIZE;
-    var endIdx = Math.min(startIdx + MARKER_PAGE_SIZE, sorted.length);
+    var startIdx = (markerPage - 1) * pageSize;
+    var endIdx = Math.min(startIdx + pageSize, sorted.length);
     var pageData = sorted.slice(startIdx, endIdx);
 
     tbody.innerHTML = pageData.map(function(marker, index) {

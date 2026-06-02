@@ -604,6 +604,11 @@ window.gotoMarkerPage = function(page) {
     renderMarkersTable(markers, getCategoryName, getCategoryColor, page);
 };
 
+window.changeMarkerPageSize = function() {
+    const markers = getMarkers();
+    renderMarkersTable(markers, getCategoryName, getCategoryColor, 1);
+};
+
 window.deleteHistoryRecord = function(id) {
     deleteSearchRecord(id);
     window.filterHistory();
