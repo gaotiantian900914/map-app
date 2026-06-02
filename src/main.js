@@ -596,7 +596,12 @@ window.sortMarkers = function(field) {
     setMarkerSort(field);
     const markers = getMarkers();
     const categories = getCategories();
-    renderMarkersTable(markers, getCategoryName, getCategoryColor);
+    renderMarkersTable(markers, getCategoryName, getCategoryColor, 1);
+};
+
+window.gotoMarkerPage = function(page) {
+    const markers = getMarkers();
+    renderMarkersTable(markers, getCategoryName, getCategoryColor, page);
 };
 
 window.deleteHistoryRecord = function(id) {

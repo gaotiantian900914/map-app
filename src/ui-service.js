@@ -119,18 +119,24 @@ export function showNearbyResults(nearbyMarkers, radius, getCategoryName, getCat
 }
 
 let markerSort = { field: 'createdAt', order: 'desc' };
+let markerPage = 1;
+const MARKER_PAGE_SIZE = 15;
 
-export function renderMarkersTable(markers, getCategoryName, getCategoryColor) {
+export function renderMarkersTable(markers, getCategoryName, getCategoryColor, page) {
     const tbody = document.getElementById('markersTableBody');
     const noMsg = document.getElementById('noMarkersMessage');
     const tableContent = tbody ? tbody.closest('.table-content') : null;
+    const paginationDiv = document.getElementById('markerPagination');
 
     if (!tbody) return;
+
+    if (page) markerPage = page;
 
     if (!markers || markers.length === 0) {
         tbody.innerHTML = '';
         if (noMsg) noMsg.style.display = 'block';
         if (tableContent) tableContent.style.display = 'none';
+        if (paginationDiv) paginationDiv.innerHTML = '';
         return;
     }
 
@@ -168,13 +174,22 @@ export function renderMarkersTable(markers, getCategoryName, getCategoryColor) {
         ths[7].onclick = function() { window.sortMarkers('createdAt'); };
     }
 
-    tbody.innerHTML = sorted.map(function(marker, index) {
+    var totalPages = Math.ceil(sorted.length / MARKER_PAGE_SIZE);
+    if (markerPage > totalPages) markerPage = totalPages;
+    if (markerPage < 1) markerPage = 1;
+
+    var startIdx = (markerPage - 1) * MARKER_PAGE_SIZE;
+    var endIdx = Math.min(startIdx + MARKER_PAGE_SIZE, sorted.length);
+    var pageData = sorted.slice(startIdx, endIdx);
+
+    tbody.innerHTML = pageData.map(function(marker, index) {
         const categoryName = getCategoryName(marker.categoryId);
         const categoryColor = getColorValue(getCategoryColor(marker.categoryId));
+        var globalIdx = startIdx + index + 1;
 
         return '<tr style="border-bottom: 1px solid #f0f0f0; transition: background 0.2s;" onmouseover="this.style.background=\'#f5f7fa\'" onmouseout="this.style.background=\'white\'">' +
             '<td style="text-align: center; padding: 12px 8px;"><input type="checkbox" class="marker-checkbox" data-id="' + escapeHtml(marker.id) + '" style="width: 16px; height: 16px; cursor: pointer;"></td>' +
-            '<td style="padding: 12px 8px; color: #999; font-size: 12px; text-align: center;">' + (index + 1) + '</td>' +
+            '<td style="padding: 12px 8px; color: #999; font-size: 12px; text-align: center;">' + globalIdx + '</td>' +
             '<td style="padding: 12px 8px; font-weight: 500; color: #333;">' + escapeHtml(marker.name) + '</td>' +
             '<td style="padding: 12px 8px;"><span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; color: white; background: ' + categoryColor + ';">' + escapeHtml(categoryName) + '</span></td>' +
             '<td style="padding: 12px 8px; color: #666; font-size: 13px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(marker.description || '-') + '</td>' +
@@ -187,6 +202,45 @@ export function renderMarkersTable(markers, getCategoryName, getCategoryColor) {
             '</div></td>' +
         '</tr>';
     }).join('');
+
+    if (paginationDiv) {
+        if (totalPages <= 1) {
+            paginationDiv.innerHTML = '<div style="text-align: center; font-size: 12px; color: #999; padding: 10px;">共 ' + sorted.length + ' 条记录</div>';
+        } else {
+            var pHtml = '<div style="display: flex; justify-content: center; align-items: center; gap: 6px; padding: 10px 0; flex-wrap: wrap;">';
+
+            pHtml += '<button onclick="window.gotoMarkerPage(1)" ' + (markerPage === 1 ? 'disabled' : '') +
+                ' style="padding: 6px 10px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === 1 ? ' opacity: 0.4; cursor: not-allowed;' : '') + '">首页</button>';
+
+            pHtml += '<button onclick="window.gotoMarkerPage(' + (markerPage - 1) + ')" ' + (markerPage === 1 ? 'disabled' : '') +
+                ' style="padding: 6px 10px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === 1 ? ' opacity: 0.4; cursor: not-allowed;' : '') + '">上一页</button>';
+
+            var sp = Math.max(1, markerPage - 2);
+            var ep = Math.min(totalPages, markerPage + 2);
+            if (sp > 1) pHtml += '<span style="color: #999; font-size: 12px;">...</span>';
+
+            for (var p = sp; p <= ep; p++) {
+                if (p === markerPage) {
+                    pHtml += '<button style="padding: 6px 12px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; min-width: 36px;">' + p + '</button>';
+                } else {
+                    pHtml += '<button onclick="window.gotoMarkerPage(' + p + ')" style="padding: 6px 12px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px; min-width: 36px;">' + p + '</button>';
+                }
+            }
+
+            if (ep < totalPages) pHtml += '<span style="color: #999; font-size: 12px;">...</span>';
+
+            pHtml += '<button onclick="window.gotoMarkerPage(' + (markerPage + 1) + ')" ' + (markerPage === totalPages ? 'disabled' : '') +
+                ' style="padding: 6px 10px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === totalPages ? ' opacity: 0.4; cursor: not-allowed;' : '') + '">下一页</button>';
+
+            pHtml += '<button onclick="window.gotoMarkerPage(' + totalPages + ')" ' + (markerPage === totalPages ? 'disabled' : '') +
+                ' style="padding: 6px 10px; border: 1px solid #e0e0e0; background: white; color: #666; border-radius: 6px; cursor: pointer; font-size: 12px;' + (markerPage === totalPages ? ' opacity: 0.4; cursor: not-allowed;' : '') + '">末页</button>';
+
+            pHtml += '<span style="font-size: 12px; color: #999; margin-left: 8px;">第 ' + markerPage + '/' + totalPages + ' 页，共 ' + sorted.length + ' 条</span>';
+
+            pHtml += '</div>';
+            paginationDiv.innerHTML = pHtml;
+        }
+    }
 }
 
 function getMarkerSortArrow(field) {
